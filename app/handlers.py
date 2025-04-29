@@ -38,5 +38,20 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_ls
+    await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
     await callback.message.answer(str(tasks_ls))
     await state.clear()
+
+
+@router.message(F.text == 'Выполнить задания')
+async def execute_tasks_handler(message: Message):
+    data = await sql.get_today_tasks_sql(message.from_user.id)
+    mes = ''
+    columns = await sql.get_all_table_sql(message.from_user.id)
+    await message.answer(str(columns))
+    # for d in range(len(data)):
+    #     if d == 0:
+    #         mes = mes+f'Сегодняшняя дата:\n{data[0]}\n\n'
+    #     else:
+    #         if data[d] == 0:
+    #             mes = mes + f''
