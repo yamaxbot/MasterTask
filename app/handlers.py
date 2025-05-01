@@ -37,6 +37,7 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
 
     await message.answer("Напишите ещё одно задание если хотите или нажмите кнопку хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
 
+
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_ls
@@ -159,3 +160,37 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
         main_mes += f'{current_n+1}/{math.ceil(len(daily_tasks)/7)}'
         
         await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
+
+
+@router.message(F.text == 'Cтатистика')
+async def general_statistics_handler(message: Message):
+    data = await sql.get_all_daily_tasks_sql(message.from_user.id)
+    columns = await sql.get_all_table_sql(message.from_user.id)
+    mes = 'Ваша статистика за всё время\n\n'
+
+    all_done_tasks = 0
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            if j != 0:
+                all_done_tasks += int(data[i][j])
+    mes += f'Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
+
+    for j in range(len(data[0])):
+        if j == 0:
+            continue
+        total_task = 0
+        shock_mode = 0
+        for i in range(len(data)):
+            total_task += int(data[i][j])
+
+            if data[i][j] == '0':
+                shock_mode = 0
+            else:
+                shock_mode += 1
+        mes += f'Задание {str(columns[j]).replace('_', ' ')}:\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+    await message.answer(mes)
+
+
+@router.message(F.text == 'Редактировать задания')
+async def edit_tasks_handler(message: Message):
+    await message.answer('Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании. Также вы можете добавить какое либо задание.', reply_markup=kb.edit_tasks_inline_kb)
