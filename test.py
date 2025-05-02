@@ -1,3 +1,5 @@
-str_mark = str(['?' for i in range(5+1)])
+import datetime
 
-print(str_mark[1:-1])
+offset = datetime.timezone(datetime.timedelta(hours=3))
+
+print(datetime.datetime.now(offset).date())
