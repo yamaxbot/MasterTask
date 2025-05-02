@@ -14,6 +14,8 @@ router = Router()
 class AddTasks(StatesGroup):
     title = State()
 
+class AddOneTask(StatesGroup):
+    title = State()
 
 @router.message(Command('start'))
 async def command_start_handler(message: Message):
@@ -162,7 +164,7 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
         await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
 
 
-@router.message(F.text == 'Cтатистика')
+@router.message(F.text == 'Статистика')
 async def general_statistics_handler(message: Message):
     data = await sql.get_all_daily_tasks_sql(message.from_user.id)
     columns = await sql.get_all_table_sql(message.from_user.id)
@@ -194,3 +196,47 @@ async def general_statistics_handler(message: Message):
 @router.message(F.text == 'Редактировать задания')
 async def edit_tasks_handler(message: Message):
     await message.answer('Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании. Также вы можете добавить какое либо задание.', reply_markup=kb.edit_tasks_inline_kb)
+
+
+@router.callback_query(F.data == 'add_task')
+async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer('Напишите новое задание, которое хотите добавить')
+    await state.set_state(AddOneTask.title)
+
+
+@router.message(AddOneTask.title)
+async def edit_task_add_state_handler(message: Message, state: FSMContext):
+    await sql.add_one_column_sql(message.from_user.id, message.text.replace(' ', '_'))
+    await message.answer(f'Вы добавили новое задание "{message.text}"')
+    await state.clear()
+
+
+@router.callback_query(F.data == 'delete_task')
+async def edit_task_delete_handler(callback: CallbackQuery):
+    await callback.answer()
+    data = await sql.get_today_tasks_sql(callback.from_user.id)
+    data = data[0]
+    mes = f'Все ваши задания\n\n'
+    columns = await sql.get_all_table_sql(callback.from_user.id)
+    columns = [column.replace('_', ' ') for column in columns]
+    for d in range(1, len(data)):
+        if data[d] == '0':
+            mes += f'{d} {columns[d]}\n'
+        else: 
+            mes += f'{d} {columns[d]}\n'
+    
+    mes += '\nЧтобы удалить задание, нажмите на кнопку снизу с номером'
+    await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
+
+
+@router.callback_query(F.data.startswith('deletetask_'))
+async def edit_task_delete_state_handler(callback: CallbackQuery):
+    await callback.answer()
+    number = str(callback.data).split('_')
+    number = int(number[1])
+    columns = await sql.get_all_table_sql(callback.from_user.id)
+    await sql.delete_one_column_sql(callback.from_user.id, columns[number])
+    await callback.message.delete()
+    await callback.message.answer(f'Задание "{str(columns[number]).replace('_', ' ')}" удалено')
+    

@@ -63,3 +63,12 @@ async def change_state_task_sql(tg_id, number):
 async def get_all_daily_tasks_sql(tg_id):
     return cur.execute(f"SELECT * FROM {'tasks_table'+str(tg_id)}").fetchall()
     
+
+async def add_one_column_sql(tg_id, text):
+    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD {text} TEXT DEFAULT '0'")
+    db.commit()
+
+
+async def delete_one_column_sql(tg_id, column):
+    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} DROP COLUMN {column}")
+    db.commit()

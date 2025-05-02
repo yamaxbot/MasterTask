@@ -30,3 +30,10 @@ inline_arroy_daily_tasks_kb = InlineKeyboardMarkup(inline_keyboard=[
 edit_tasks_inline_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Добавить задание', callback_data='add_task'), InlineKeyboardButton(text='Удалить задание', callback_data='delete_task')]
 ])
+
+
+async def delete_one_task_inline(quant):
+    keyboard = InlineKeyboardBuilder()
+    for i in range(1, quant+1):
+        keyboard.add(InlineKeyboardButton(text=str(i), callback_data=f'deletetask_{str(i)}'))
+    return keyboard.adjust(3).as_markup()
