@@ -218,7 +218,7 @@ async def general_statistics_handler(message: Message, state: FSMContext):
                     shock_mode = 0
                 else:
                     shock_mode += 1
-            mes += f'Задание "{str(columns[j]).replace('_', ' ')}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            mes += f'Задание {str(columns[j]).replace("_", " ")}:\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
         await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
@@ -274,7 +274,7 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
     columns = await sql.get_all_columns_sql(callback.from_user.id)
     await sql.delete_one_column_sql(callback.from_user.id, columns[number])
     await callback.message.delete()
-    await callback.message.answer(f'✅Задание "{str(columns[number]).replace('_', ' ')}" удалено')
+    await callback.message.answer(f"✅Задание {str(columns[number]).replace('_', ' ')} удалено")
     
 
 @router.message(F.text == '🙋‍♂️Статистика друга')
