@@ -26,7 +26,13 @@ async def command_start_handler(message: Message, state: FSMContext):
         await sql.add_client_sql(message.from_user.id)
 
 
-@router.message(F.text == 'Создать задания')
+@router.message(Command('help'))
+async def command_help_handler(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer('🗒Инструкция\n\n✏Выполнение заданий:\nПервым делом вам нужно создать ваши ежедневне задания с помощью кнопки Создать задания. После создания заданий вы можете ежедневно отмечать задания, которые вы сделали, с помощью кнопки Выполнить задания. Также если вы хотите удалить какое либо задание, или добавить новое, вы можете это сделать, нажав на кнопку Редактировать задания\n\n📊Статистика:\nЧтобы узнать статистику, где будет показываться сколько заданий вы сделали всего, нужно нажать на кнопку Статистика.\nЕсли вы хотите узнать в какие дни, какие задания вы делали, нужно нажать на кнопку ежедневная статистика.')
+
+
+@router.message(F.text == '📖Создать задания')
 async def create_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     global tasks_ls 
@@ -43,10 +49,11 @@ async def create_tasks_handler(message: Message, state: FSMContext):
 async def create_tasks_state_handler(message: Message, state: FSMContext):
     global tasks_ls
     text = message.text.replace(' ', '_')
-    tasks_ls.append(text)
-
-    await message.answer("😉Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
-
+    if message.text not in tasks_ls:
+        tasks_ls.append(text)
+        await message.answer("😉Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
+    else:
+        await message.answer("😉Точно такое задание уже есть. Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
 
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
@@ -57,7 +64,7 @@ async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@router.message(F.text == 'Выполнить задания')
+@router.message(F.text == '✏️Выполнить задания')
 async def execute_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     aval_tasks = await sql.availability_of_table(message.from_user.id)
@@ -100,7 +107,7 @@ async def change_state_task_handler(callback: CallbackQuery):
     await callback.message.edit_text(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
 
 
-@router.message(F.text == 'Ежедневная статистика')
+@router.message(F.text == '📈Ежедневная статистика')
 async def daily_statics_handler(message: Message, state: FSMContext):
     await state.clear()
     aval_tasks = await sql.availability_of_table(message.from_user.id)
@@ -183,7 +190,7 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
         await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
 
 
-@router.message(F.text == 'Статистика')
+@router.message(F.text == '📊Статистика')
 async def general_statistics_handler(message: Message, state: FSMContext):
     await state.clear()
     aval_tasks = await sql.availability_of_table(message.from_user.id)
@@ -217,7 +224,7 @@ async def general_statistics_handler(message: Message, state: FSMContext):
         await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
 
 
-@router.message(F.text == 'Редактировать задания')
+@router.message(F.text == '📝Редактировать задания')
 async def edit_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     aval_tasks = await sql.availability_of_table(message.from_user.id)
@@ -255,7 +262,7 @@ async def edit_task_delete_handler(callback: CallbackQuery):
         else: 
             mes += f'{d} {columns[d]}\n'
     
-    mes += '\nЧтобы удалить задание, нажмите на кнопку снизу с номером'
+    mes += '\n‼️Чтобы удалить задание, нажмите на кнопку снизу с номером'
     await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
 
 
@@ -269,4 +276,8 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
     await callback.message.delete()
     await callback.message.answer(f'✅Задание "{str(columns[number]).replace('_', ' ')}" удалено')
     
-    
+
+@router.message(F.text == '🙋‍♂️Статистика друга')
+async def statistics_friend_handler(message: Message, state:FSMContext):
+    await state.clear()
+    await message.answer('Данная функция пока не работает, но скоро будет доступна')
