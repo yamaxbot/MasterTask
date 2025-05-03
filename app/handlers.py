@@ -53,7 +53,7 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
         tasks_ls.append(text)
         await message.answer("😉Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
     else:
-        await message.answer("😉Точно такое задание уже есть. Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
+        await message.answer("‼️Точно такое задание уже есть. Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
 
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
