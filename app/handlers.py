@@ -237,15 +237,20 @@ async def edit_tasks_handler(message: Message, state: FSMContext):
 @router.callback_query(F.data == 'add_task')
 async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer('‼️Напишите новое задание, которое хотите добавить')
+    await callback.message.answer('‼️Напишите новое задание, которое хотите добавить', reply_markup=kb.inline_cancel_kb)
     await state.set_state(AddOneTask.title)
 
 
 @router.message(AddOneTask.title)
 async def edit_task_add_state_handler(message: Message, state: FSMContext):
-    await sql.add_one_column_sql(message.from_user.id, message.text.replace(' ', '_'))
-    await message.answer(f'✅Вы добавили новое задание "{message.text}"')
-    await state.clear()
+    columns = await sql.get_all_columns_sql(message.from_user.id)
+    text = message.text.replace(' ', '_')
+    if text not in columns:
+        await sql.add_one_column_sql(message.from_user.id, text)
+        await message.answer(f'✅Вы добавили новое задание "{message.text}"')
+        await state.clear()
+    else:
+        await message.answer('Точно такоеже задание у вас уже есть. Напишите другое задание или отмените действие с помощью кнопки Отменить', reply_markup=kb.inline_cancel_kb)
 
 
 @router.callback_query(F.data == 'delete_task')
@@ -281,3 +286,10 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
 async def statistics_friend_handler(message: Message, state:FSMContext):
     await state.clear()
     await message.answer('Данная функция пока не работает, но скоро будет доступна')
+
+
+@router.callback_query(F.data == 'cancel')
+async def cancel_callback_handler(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.delete()
+    await callback.message.answer('Действие отменено')

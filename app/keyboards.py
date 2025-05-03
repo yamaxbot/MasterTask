@@ -38,3 +38,8 @@ async def delete_one_task_inline(quant):
     for i in range(1, quant+1):
         keyboard.add(InlineKeyboardButton(text=str(i), callback_data=f'deletetask_{str(i)}'))
     return keyboard.adjust(3).as_markup()
+
+
+inline_cancel_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Отмена', callback_data='cancel')]
+])
