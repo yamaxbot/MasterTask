@@ -29,8 +29,9 @@ async def get_all_id_users_sql():
 async def create_new_table_sql(tasks, tg_id):
     today = datetime.datetime.now(time_moscow).date()
     cur.execute(f"CREATE TABLE IF NOT EXISTS {'tasks_table'+str(tg_id)}(date TEXT)")
+
     for task in tasks:
-        cur.execute(f"ALTER TABLE '{'tasks_table'+str(tg_id)}' ADD COLUMN '{task}' TEXT DEFAULT '0'")
+        cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD COLUMN [{task}] TEXT DEFAULT '0'")
     str_mark = str(['?' for i in range(len(tasks)+1)]).replace("'", '')
     sql_request = f"INSERT INTO {'tasks_table'+str(tg_id)} VALUES({str_mark[1:-1]})"
     values_ls = [str(today)]
@@ -56,13 +57,12 @@ async def get_all_columns_sql(tg_id):
 async def change_state_task_sql(tg_id, number):
     today = str(datetime.datetime.now(time_moscow).date())
     data = cur.execute(f"PRAGMA table_info({'tasks_table'+str(tg_id)})").fetchall()
-    get_state = cur.execute(f"SELECT '{data[int(number)][1]}' FROM '{'tasks_table'+str(tg_id)}' WHERE date = ?", (str(today), )).fetchone()[0]
-    print('tasks_table'+str(tg_id))
-    print(data[int(number)][1])
+    get_state = cur.execute(f"SELECT [{data[int(number)][1]}] FROM {'tasks_table'+str(tg_id)} WHERE date = ?", (str(today), )).fetchone()[0]
+
     if get_state == '0':
-        cur.execute(f"UPDATE {'tasks_table'+str(tg_id)} SET {data[int(number)][1]} = ? WHERE date = ?", ('1', today, ))
+        cur.execute(f"UPDATE {'tasks_table'+str(tg_id)} SET [{data[int(number)][1]}] = ? WHERE date = ?", ('1', today, ))
     else:
-        cur.execute(f"UPDATE {'tasks_table'+str(tg_id)} SET {data[int(number)][1]} = ? WHERE date = ?", ('0', today, ))
+        cur.execute(f"UPDATE {'tasks_table'+str(tg_id)} SET [{data[int(number)][1]}] = ? WHERE date = ?", ('0', today, ))
 
     db.commit()
 
@@ -72,12 +72,12 @@ async def get_all_daily_tasks_sql(tg_id):
     
 
 async def add_one_column_sql(tg_id, text):
-    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD {text} TEXT DEFAULT '0'")
+    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD [{text}] TEXT DEFAULT '0'")
     db.commit()
 
 
 async def delete_one_column_sql(tg_id, column):
-    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} DROP COLUMN {column}")
+    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} DROP COLUMN [{column}]")
     db.commit()
 
 
