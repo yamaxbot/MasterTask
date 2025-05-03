@@ -20,7 +20,7 @@ class AddOneTask(StatesGroup):
 @router.message(Command('start'))
 async def command_start_handler(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer('Это бот по дисциплине, прочитайте инструкцию', reply_markup=kb.client_reply_keyboards)
+    await message.answer('👋Привет! Это бот, который поможет вам в улучшении вашей дисциплины, а также поможет удобно составлять и выполнять график дня.\n\n☄Здесь вы можете:\n-Создать график дня\n-Ежедневно отмечать выполненные задания\n-Формировать статистику, с помощью которой вы сможете оценить свою продуктивность\n\n📋Подробно познакомиться со всем функционалом вы сможете прочитав инструкцию, введя команду /help\n\n❓Если у вас возникли вопросы или же вы хотите предложить свою идею в развитии бота, пишите сюда: @TaskMasterSupportBot\n\n👨‍💻Наш канал, где выходят самые свежие новости про этого бота: @BestTaskMaster', reply_markup=kb.client_reply_keyboards)
     data = await sql.get_all_id_users_sql()
     if str(message.from_user.id) not in data:
         await sql.add_client_sql(message.from_user.id)
@@ -31,9 +31,12 @@ async def create_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     global tasks_ls 
     tasks_ls = []
-    
-    await message.answer('Пишите свои задачи по одному')
-    await state.set_state(AddTasks.title)
+    aval_table = await sql.availability_of_table(message.from_user.id)
+    if aval_table == 'no':
+        await message.answer('‼️Пишите задачи, который вам нужно делать по одному. Если вы написали все задания, нажмите кнопку Хватит')
+        await state.set_state(AddTasks.title)
+    else:
+        await message.answer('‼️У вас уже созданы задания, вы их можете отредактировать нажав на кнопку Редактировать задания')
 
 
 @router.message(AddTasks.title)
@@ -42,15 +45,15 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
     text = message.text.replace(' ', '_')
     tasks_ls.append(text)
 
-    await message.answer("Напишите ещё одно задание если хотите или нажмите кнопку хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
+    await message.answer("😉Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
 
 
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_ls
-    
+    await callback.answer()
     await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
-    await callback.message.answer(f'Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
+    await callback.message.answer(f'✅Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
     await state.clear()
 
 
@@ -61,7 +64,7 @@ async def execute_tasks_handler(message: Message, state: FSMContext):
     if aval_tasks == 'yes':
         data = await sql.get_today_tasks_sql(message.from_user.id)
         data = data[0]
-        mes = f'Сегодняшняя дата:\n{data[0]}\n\n'
+        mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
         columns = await sql.get_all_columns_sql(message.from_user.id)
         columns = [column.replace('_', ' ') for column in columns]
         for d in range(1, len(data)):
@@ -70,10 +73,10 @@ async def execute_tasks_handler(message: Message, state: FSMContext):
             else: 
                 mes += f'{d} {columns[d]} - ✅\n'
         
-        mes += '\nЧтобы задание выделилось галочкой, нажмите на кнопку снизу с номером'
+        mes += '\n‼️Чтобы задание выделилось галочкой, нажмите на кнопку снизу с номером'
         await message.answer(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
     else:
-        await message.answer('У вас пока не созданы задания, пожалуйста создайте их')
+        await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их')
 
 
 @router.callback_query(F.data.startswith('number_'))
@@ -84,7 +87,7 @@ async def change_state_task_handler(callback: CallbackQuery):
 
     data = await sql.get_today_tasks_sql(callback.from_user.id)
     data = data[0]
-    mes = f'Сегодняшняя дата:\n{data[0]}\n\n'
+    mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
     columns = await sql.get_all_columns_sql(callback.from_user.id)
     columns = [column.replace('_', ' ') for column in columns]
     for d in range(1, len(data)):
@@ -93,7 +96,7 @@ async def change_state_task_handler(callback: CallbackQuery):
         else: 
             mes += f'{d} {columns[d]} - ✅\n'
 
-    mes += '\nЧтобы задание выделилось галочкой, нажмите на кнопку снизу с номером'
+    mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
     await callback.message.edit_text(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
 
 
@@ -103,7 +106,7 @@ async def daily_statics_handler(message: Message, state: FSMContext):
     aval_tasks = await sql.availability_of_table(message.from_user.id)
     if aval_tasks == 'yes':
         daily_tasks = await sql.get_all_daily_tasks_sql(message.from_user.id)
-        main_mes = 'Дневная статистика\n\n'
+        main_mes = 'Ежедневная статистика\n\n'
         for data in daily_tasks[-1: -8: -1][::-1]:
             mes = f'Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(message.from_user.id)
@@ -119,7 +122,7 @@ async def daily_statics_handler(message: Message, state: FSMContext):
         
         await message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
     else:
-        await message.answer('У вас не созданы задания, пожалуйста создайте их')
+        await message.answer('‼️У вас не созданы задания, пожалуйста создайте их')
 
 
 @router.callback_query(F.data == 'arrow_left')
@@ -134,7 +137,7 @@ async def daily_statics_allow_left_handler(callback: CallbackQuery):
         stop_page = start_page+7
 
         daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
-        main_mes = 'Дневная статистика\n\n'
+        main_mes = 'Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
             mes = f'Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(callback.from_user.id)
@@ -163,7 +166,7 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
         stop_page = start_page+7
 
         daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
-        main_mes = 'Дневная статистика\n\n'
+        main_mes = 'Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
             mes = f'Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(callback.from_user.id)
@@ -208,10 +211,10 @@ async def general_statistics_handler(message: Message, state: FSMContext):
                     shock_mode = 0
                 else:
                     shock_mode += 1
-            mes += f'Задание {str(columns[j]).replace('_', ' ')}:\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            mes += f'Задание "{str(columns[j]).replace('_', ' ')}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
-        await message.answer('У вас нет заданий, пожалуйста создайте их')
+        await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
 
 
 @router.message(F.text == 'Редактировать задания')
@@ -219,22 +222,22 @@ async def edit_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     aval_tasks = await sql.availability_of_table(message.from_user.id)
     if aval_tasks == 'yes':
-        await message.answer('Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании. Также вы можете добавить какое либо задание.', reply_markup=kb.edit_tasks_inline_kb)
+        await message.answer('🌏Также вы можете добавить какое либо задание, вместе с этим, за все прошедшие дни, будет выделено, что вы не выполняли это задание\n\n🗑Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании.\n\n', reply_markup=kb.edit_tasks_inline_kb)
     else:
-        await message.answer('У вас пока что нет заданий, пожалуйста создайте их')
+        await message.answer('‼️У вас пока что нет заданий, пожалуйста создайте их')
 
 
 @router.callback_query(F.data == 'add_task')
 async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer('Напишите новое задание, которое хотите добавить')
+    await callback.message.answer('‼️Напишите новое задание, которое хотите добавить')
     await state.set_state(AddOneTask.title)
 
 
 @router.message(AddOneTask.title)
 async def edit_task_add_state_handler(message: Message, state: FSMContext):
     await sql.add_one_column_sql(message.from_user.id, message.text.replace(' ', '_'))
-    await message.answer(f'Вы добавили новое задание "{message.text}"')
+    await message.answer(f'✅Вы добавили новое задание "{message.text}"')
     await state.clear()
 
 
@@ -243,7 +246,7 @@ async def edit_task_delete_handler(callback: CallbackQuery):
     await callback.answer()
     data = await sql.get_today_tasks_sql(callback.from_user.id)
     data = data[0]
-    mes = f'Все ваши задания\n\n'
+    mes = f'📒Все ваши задания\n\n'
     columns = await sql.get_all_columns_sql(callback.from_user.id)
     columns = [column.replace('_', ' ') for column in columns]
     for d in range(1, len(data)):
@@ -264,6 +267,6 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
     columns = await sql.get_all_columns_sql(callback.from_user.id)
     await sql.delete_one_column_sql(callback.from_user.id, columns[number])
     await callback.message.delete()
-    await callback.message.answer(f'Задание "{str(columns[number]).replace('_', ' ')}" удалено')
+    await callback.message.answer(f'✅Задание "{str(columns[number]).replace('_', ' ')}" удалено')
     
     

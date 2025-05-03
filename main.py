@@ -11,7 +11,7 @@ async def main():
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     await sql.start_sql()
-    await asyncio.create_task(new_date())
+    task1 = await asyncio.create_task(new_date())
     dp.include_router(router=router)
     await dp.start_polling(bot)
 
