@@ -58,10 +58,12 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_ls
-    await callback.answer()
-    await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
-    await callback.message.answer(f'✅Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
-    await state.clear()
+    if len(tasks_ls) != 0:
+        await callback.answer()
+        await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
+        await callback.message.answer(f'✅Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
+        await state.clear()
+        tasks_ls = []
 
 
 @router.message(F.text == '✏️Выполнить задания')
@@ -113,9 +115,9 @@ async def daily_statics_handler(message: Message, state: FSMContext):
     aval_tasks = await sql.availability_of_table(message.from_user.id)
     if aval_tasks == 'yes':
         daily_tasks = await sql.get_all_daily_tasks_sql(message.from_user.id)
-        main_mes = 'Ежедневная статистика\n\n'
+        main_mes = '📈Ежедневная статистика\n\n'
         for data in daily_tasks[-1: -8: -1][::-1]:
-            mes = f'Дата:\n{data[0]}\n'
+            mes = f'🗓Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(message.from_user.id)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):
@@ -197,14 +199,14 @@ async def general_statistics_handler(message: Message, state: FSMContext):
     if aval_tasks == 'yes':
         data = await sql.get_all_daily_tasks_sql(message.from_user.id)
         columns = await sql.get_all_columns_sql(message.from_user.id)
-        mes = 'Ваша статистика за всё время\n\n'
+        mes = '📊Ваша статистика за всё время\n\n'
 
         all_done_tasks = 0
         for i in range(len(data)):
             for j in range(len(data[i])):
                 if j != 0:
                     all_done_tasks += int(data[i][j])
-        mes += f'Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
+        mes += f'🌏Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
 
         for j in range(len(data[0])):
             if j == 0:
@@ -218,7 +220,7 @@ async def general_statistics_handler(message: Message, state: FSMContext):
                     shock_mode = 0
                 else:
                     shock_mode += 1
-            mes += f'Задание {str(columns[j]).replace("_", " ")}:\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            mes += f'{i+1} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
         await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
