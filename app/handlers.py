@@ -82,7 +82,7 @@ async def execute_tasks_handler(message: Message, state: FSMContext):
             else: 
                 mes += f'{d} {columns[d]} - ✅\n'
         
-        mes += '\n‼️Чтобы задание выделилось галочкой, нажмите на кнопку снизу с номером'
+        mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
         await message.answer(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
     else:
         await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их')
