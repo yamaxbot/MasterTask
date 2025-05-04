@@ -12,6 +12,12 @@ async def start_sql():
     db.commit()
 
 
+async def connection_sql():
+    global db, cur 
+
+    db = sql.connect('data.db')
+    cur = sql.Cursor(db)
+
 
 async def add_client_sql(tg_id):
     cur.execute("INSERT INTO clients VALUES(?, ?)", (tg_id, 0,))
