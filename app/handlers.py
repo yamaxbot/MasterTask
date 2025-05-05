@@ -227,7 +227,7 @@ async def general_statistics_handler(message: Message, state: FSMContext):
                     shock_mode = 0
                 else:
                     shock_mode += 1
-            mes += f'📋 Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
         await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
