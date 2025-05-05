@@ -43,3 +43,18 @@ async def delete_one_task_inline(quant):
 inline_cancel_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Отмена', callback_data='cancel')]
 ])
+
+
+inline_friend_statistics_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Мой код', callback_data='my_code'), InlineKeyboardButton(text='Статистика друга', callback_data='friend_code')]
+])
+
+
+inline_create_delete_code_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Создать код', callback_data='create_code'), InlineKeyboardButton(text='Удалить код', callback_data='delete_code')]
+])
+
+
+inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Общая статистика', callback_data='general_statistics'), InlineKeyboardButton(text='Статистика', callback_data='default_statistics')]
+])

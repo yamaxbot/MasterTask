@@ -9,6 +9,7 @@ async def start_sql():
     cur = sql.Cursor(db)
 
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, subscription TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT)")
     db.commit()
 
 
@@ -115,3 +116,17 @@ async def availability_of_table(tg_id):
         return 'yes'
     else:
         return 'no'
+
+
+async def get_user_friend_statistics_sql(tg_id):
+    return cur.execute("SELECT * FROM friend_statistics WHERE id = ?", (tg_id, )).fetchone()
+
+
+async def add_code_friend_statistics_sql(tg_id, code):
+    cur.execute('INSERT INTO friend_statistics VALUES(?, ?)', (tg_id, code, ))
+    db.commit()
+
+
+async def delete_code_friend_statistics_sql(tg_id):
+    cur.execute("DELETE FROM friend_statistics WHERE id = ?", (tg_id, ))
+    db.commit()

@@ -7,6 +7,7 @@ import math
 
 import app.database.sqlite_db as sql
 import app.keyboards as kb
+import app.other_func as otf
 
 router = Router()
 
@@ -16,6 +17,10 @@ class AddTasks(StatesGroup):
 
 class AddOneTask(StatesGroup):
     title = State()
+
+class PasswordFriend(StatesGroup):
+    password = State()
+
 
 @router.message(Command('start'))
 async def command_start_handler(message: Message, state: FSMContext):
@@ -39,7 +44,7 @@ async def create_tasks_handler(message: Message, state: FSMContext):
     tasks_ls = []
     aval_table = await sql.availability_of_table(message.from_user.id)
     if aval_table == 'no':
-        await message.answer('‼️Пишите задачи, который вам нужно делать по одному. Если вы написали все задания, нажмите кнопку Хватит')
+        await message.answer('‼️Пишите задания по одному сообщению.')
         await state.set_state(AddTasks.title)
     else:
         await message.answer('‼️У вас уже созданы задания, вы их можете отредактировать нажав на кнопку Редактировать задания')
@@ -58,12 +63,14 @@ async def create_tasks_state_handler(message: Message, state: FSMContext):
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_ls
+
     if len(tasks_ls) != 0:
         await callback.answer()
         await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
         await callback.message.answer(f'✅Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
         await state.clear()
         tasks_ls = []
+
 
 
 @router.message(F.text == '✏️Выполнить задания')
@@ -220,7 +227,7 @@ async def general_statistics_handler(message: Message, state: FSMContext):
                     shock_mode = 0
                 else:
                     shock_mode += 1
-            mes += f'{i+1} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            mes += f'📋 Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
         await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
@@ -284,14 +291,59 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
     await callback.message.answer(f"✅Задание {str(columns[number]).replace('_', ' ')} удалено")
     
 
-@router.message(F.text == '🙋‍♂️Статистика друга')
-async def statistics_friend_handler(message: Message, state:FSMContext):
-    await state.clear()
-    await message.answer('Данная функция пока не работает, но скоро будет доступна')
-
-
 @router.callback_query(F.data == 'cancel')
 async def cancel_callback_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.delete()
     await callback.message.answer('Действие отменено')
+
+
+@router.message(F.text == '🙋‍♂️Статистика друга')
+async def statistics_friend_handler(message: Message, state:FSMContext):
+    await state.clear()
+    if int(message.from_user.id) == 5227185772:
+        await message.answer('Здесь вы можете создать свой специальный код, чтобы ваш друг смог посмотреть вашу статистику.\nТакже вы можете посмотреть статистику своего друга, если у вас есть специальный код, который должен предоставить ваш друг', reply_markup=kb.inline_friend_statistics_kb)
+    else:
+        await message.answer('Данная функция пока не работает, но скоро будет доступна')
+
+
+@router.callback_query(F.data == 'my_code')
+async def my_code_callback_handler(callback: CallbackQuery):
+    data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
+    if data == None:
+        await callback.message.answer('У вас пока нет кода, но вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
+    else:
+        await callback.message.answer(f'Ваш код: {data[1]}\n\nЕсли вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb)
+
+
+@router.callback_query(F.data == 'create_code')
+async def create_code_handler(callback: CallbackQuery):
+    data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
+    if data == None:
+        code = await otf.generation_code()
+        await sql.add_code_friend_statistics_sql(callback.from_user.id, code)
+        await callback.message.edit_text(f'Ваш код: {code}\n\nЕсли вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb)
+    else:
+        await callback.message.answer('У вас уже есть код')
+
+
+@router.callback_query(F.data == 'delete_code')
+async def delete_code_handler(callback: CallbackQuery):
+    data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
+    if data == None:
+        await callback.message.answer('У вас нет кода')
+    else:
+        await sql.delete_code_friend_statistics_sql(callback.from_user.id)
+        await callback.message.edit_text('У вас пока нет кода, но вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
+        
+@router.callback_query(F.data == 'friend_code')
+async def friend_code_state_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer('Отправь код, который вы получили от друга')
+    await state.set_state(PasswordFriend.password)
+
+
+@router.message(PasswordFriend.password)
+async def friend_code_state_password_handler(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(f'Ваш код: {message.text}\n\nВы можете посмотреть 2 статистики вашего друга', reply_markup=kb.inline_friend_statistics_all_kb)
