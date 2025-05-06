@@ -56,5 +56,5 @@ inline_create_delete_code_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 
 inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Общая статистика', callback_data='general_statistics'), InlineKeyboardButton(text='Статистика', callback_data='default_statistics')]
+    [InlineKeyboardButton(text='Статистика', callback_data='general_statistics')]
 ])

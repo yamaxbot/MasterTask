@@ -130,3 +130,16 @@ async def add_code_friend_statistics_sql(tg_id, code):
 async def delete_code_friend_statistics_sql(tg_id):
     cur.execute("DELETE FROM friend_statistics WHERE id = ?", (tg_id, ))
     db.commit()
+
+
+async def get_all_friends_codes_sql():
+    data = cur.execute("SELECT * FROM friend_statistics").fetchall()
+    all_date = []
+    for code in data:
+        all_date.append(code[1])
+    return all_date
+
+
+async def get_id_by_password_sql(password):
+    data = cur.execute("SELECT * FROM friend_statistics WHERE password = ?", (password, )).fetchone()
+    return data[0]

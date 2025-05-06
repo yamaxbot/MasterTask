@@ -2,8 +2,6 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from app.handlers import router
 
-import time
-import datetime
 from config import TOKEN
 import app.database.sqlite_db as sql
 

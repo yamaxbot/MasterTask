@@ -259,7 +259,7 @@ async def edit_task_add_state_handler(message: Message, state: FSMContext):
         await message.answer(f'✅Вы добавили новое задание "{message.text}"')
         await state.clear()
     else:
-        await message.answer('Точно такоеже задание у вас уже есть. Напишите другое задание или отмените действие с помощью кнопки Отменить', reply_markup=kb.inline_cancel_kb)
+        await message.answer('‼️Точно такоеже задание у вас уже есть. Напишите другое задание или отмените действие с помощью кнопки Отменить', reply_markup=kb.inline_cancel_kb)
 
 
 @router.callback_query(F.data == 'delete_task')
@@ -301,19 +301,16 @@ async def cancel_callback_handler(callback: CallbackQuery, state: FSMContext):
 @router.message(F.text == '🙋‍♂️Статистика друга')
 async def statistics_friend_handler(message: Message, state:FSMContext):
     await state.clear()
-    if int(message.from_user.id) == 5227185772:
-        await message.answer('Здесь вы можете создать свой специальный код, чтобы ваш друг смог посмотреть вашу статистику.\nТакже вы можете посмотреть статистику своего друга, если у вас есть специальный код, который должен предоставить ваш друг', reply_markup=kb.inline_friend_statistics_kb)
-    else:
-        await message.answer('Данная функция пока не работает, но скоро будет доступна')
+    await message.answer('🔑Здесь вы можете создать свой специальный код, чтобы ваш друг смог посмотреть вашу статистику.\n\n🔐Также вы можете посмотреть статистику своего друга, если у вас есть специальный код, который должен предоставить ваш друг', reply_markup=kb.inline_friend_statistics_kb)
 
 
 @router.callback_query(F.data == 'my_code')
 async def my_code_callback_handler(callback: CallbackQuery):
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
-        await callback.message.answer('У вас пока нет кода, но вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
+        await callback.message.answer('🔑У вас пока нет кода. Вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
     else:
-        await callback.message.answer(f'Ваш код: {data[1]}\n\nЕсли вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb)
+        await callback.message.answer(f'🔑Ваш код: `{data[1]}`\n🫵Кликните по нему чтобы скопировать\n\n🔓Любой кому вы отправите этот код, сможет посмотреть вашу статистику\n\n🗑Если вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb,parse_mode="MARKDOWN")
 
 
 @router.callback_query(F.data == 'create_code')
@@ -322,28 +319,74 @@ async def create_code_handler(callback: CallbackQuery):
     if data == None:
         code = await otf.generation_code()
         await sql.add_code_friend_statistics_sql(callback.from_user.id, code)
-        await callback.message.edit_text(f'Ваш код: {code}\n\nЕсли вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb)
+        await callback.message.edit_text(f'🔑Ваш код: `{code}`\n🫵Кликните по нему чтобы скопировать\n\n🔓Любой кому вы отправите этот код, сможет посмотреть вашу статистику\n\n🗑Если вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb, parse_mode="MARKDOWN")
     else:
-        await callback.message.answer('У вас уже есть код')
+        await callback.message.answer('‼️У вас уже есть код')
 
 
 @router.callback_query(F.data == 'delete_code')
 async def delete_code_handler(callback: CallbackQuery):
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
-        await callback.message.answer('У вас нет кода')
+        await callback.message.answer('‼️У вас нет кода')
     else:
         await sql.delete_code_friend_statistics_sql(callback.from_user.id)
-        await callback.message.edit_text('У вас пока нет кода, но вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
+        await callback.message.edit_text('🔑У вас пока нет кода. Вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
         
+
 @router.callback_query(F.data == 'friend_code')
 async def friend_code_state_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer('Отправь код, который вы получили от друга')
+    await callback.message.answer('🔑Отправьте код, который вы получили от друга')
     await state.set_state(PasswordFriend.password)
 
 
 @router.message(PasswordFriend.password)
 async def friend_code_state_password_handler(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer(f'Ваш код: {message.text}\n\nВы можете посмотреть 2 статистики вашего друга', reply_markup=kb.inline_friend_statistics_all_kb)
+    all_codes = await sql.get_all_friends_codes_sql()
+    id_by_code = await sql.get_id_by_password_sql(message.text)
+
+    if str(message.from_user.id) == id_by_code:
+        await message.answer('‼️Это ваш собственный код')
+    elif message.text in all_codes:
+        await message.answer(f'🔐Код который вы ввели: `{message.text}`\n\n🙋‍♂️Вы можете посмотреть статистику вашего друга', reply_markup=kb.inline_friend_statistics_all_kb, parse_mode="MARKDOWN")
+        await state.clear()
+    else:
+        await message.answer('‼️Такого кода нет или он уже неактивен. Введите другой код или нажмите кнопку Отменить', reply_markup=kb.inline_cancel_kb)
+
+
+@router.callback_query(F.data == 'general_statistics')
+async def general_statistics_friend_handler(callback: CallbackQuery):
+    friend_password = list(str(callback.message.text).split())
+    id_user = await sql.get_id_by_password_sql(friend_password[4])
+
+    aval_tasks = await sql.availability_of_table(id_user)
+    if aval_tasks == 'yes':
+        data = await sql.get_all_daily_tasks_sql(id_user)
+        columns = await sql.get_all_columns_sql(id_user)
+        mes = '📊Cтатистика вашего друга за всё время\n\n'
+
+        all_done_tasks = 0
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                if j != 0:
+                    all_done_tasks += int(data[i][j])
+        mes += f'🌏Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
+
+        for j in range(len(data[0])):
+            if j == 0:
+                continue
+            total_task = 0
+            shock_mode = 0
+            for i in range(len(data)):
+                total_task += int(data[i][j])
+
+                if data[i][j] == '0':
+                    shock_mode = 0
+                else:
+                    shock_mode += 1
+            mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+        await callback.message.answer(mes)
+    else:
+        await callback.message.answer('‼️У данного пользователя нет заданий')
+
