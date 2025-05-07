@@ -306,6 +306,7 @@ async def statistics_friend_handler(message: Message, state:FSMContext):
 
 @router.callback_query(F.data == 'my_code')
 async def my_code_callback_handler(callback: CallbackQuery):
+    await callback.answer()
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
         await callback.message.answer('🔑У вас пока нет кода. Вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
@@ -315,6 +316,7 @@ async def my_code_callback_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'create_code')
 async def create_code_handler(callback: CallbackQuery):
+    await callback.answer()
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
         code = await otf.generation_code()
@@ -326,6 +328,7 @@ async def create_code_handler(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'delete_code')
 async def delete_code_handler(callback: CallbackQuery):
+    await callback.answer()
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
         await callback.message.answer('‼️У вас нет кода')
@@ -349,7 +352,7 @@ async def friend_code_state_password_handler(message: Message, state: FSMContext
     if str(message.from_user.id) == id_by_code:
         await message.answer('‼️Это ваш собственный код')
     elif message.text in all_codes:
-        await message.answer(f'🔐Код который вы ввели: `{message.text}`\n\n🙋‍♂️Вы можете посмотреть статистику вашего друга', reply_markup=kb.inline_friend_statistics_all_kb, parse_mode="MARKDOWN")
+        await message.answer(f'🔐Код который вы ввели: `{message.text}`\n\n🙋‍♂️Вы можете посмотреть 2 статистики вашего друга', reply_markup=kb.inline_friend_statistics_all_kb, parse_mode="MARKDOWN")
         await state.clear()
     else:
         await message.answer('‼️Такого кода нет или он уже неактивен. Введите другой код или нажмите кнопку Отменить', reply_markup=kb.inline_cancel_kb)
@@ -357,6 +360,7 @@ async def friend_code_state_password_handler(message: Message, state: FSMContext
 
 @router.callback_query(F.data == 'general_statistics')
 async def general_statistics_friend_handler(callback: CallbackQuery):
+    await callback.answer()
     friend_password = list(str(callback.message.text).split())
     id_user = await sql.get_id_by_password_sql(friend_password[4])
 

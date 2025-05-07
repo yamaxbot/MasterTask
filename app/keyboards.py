@@ -57,11 +57,12 @@ inline_create_delete_code_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 
 inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Статистика', callback_data='general_statistics'), InlineKeyboardButton(text='Ежедневная статистика', callback_data='default_statistics')]
+    [InlineKeyboardButton(text='Статистика', callback_data='general_statistics')],
+    [InlineKeyboardButton(text='Ежедневная статистика', callback_data='default_statistics')]
 ])
 
 
 
 inline_arroy_daily_tasks_friend_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='⬅', callback_data='arrow_left_freind'), InlineKeyboardButton(text='➡', callback_data='arrow_right_friend')]
+    [InlineKeyboardButton(text='⬅', callback_data='arrow_left_friend'), InlineKeyboardButton(text='➡', callback_data='arrow_right_friend')]
 ])
