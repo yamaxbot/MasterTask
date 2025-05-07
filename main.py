@@ -6,6 +6,7 @@ from config import TOKEN
 import app.database.sqlite_db as sql
 
 async def main():
+    
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     await sql.start_sql()

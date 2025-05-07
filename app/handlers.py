@@ -390,3 +390,94 @@ async def general_statistics_friend_handler(callback: CallbackQuery):
     else:
         await callback.message.answer('‼️У данного пользователя нет заданий')
 
+
+
+@router.callback_query(F.data == 'default_statistics')
+async def daily_statics_friend_handler(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.answer()
+    friend_password = list(str(callback.message.text).split())
+    id_user = await sql.get_id_by_password_sql(friend_password[4])
+    aval_tasks = await sql.availability_of_table(id_user)
+
+    if aval_tasks == 'yes':
+        daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
+        main_mes = f'🔐Код вашего друга: {friend_password[4]}\n\n📈Ежедневная статистика\n\n'
+        for data in daily_tasks[-1: -8: -1][::-1]:
+            mes = f'🗓Дата:\n{data[0]}\n'
+            columns = await sql.get_all_columns_sql(id_user)
+            columns = [column.replace('_', ' ') for column in columns]
+            for d in range(1, len(data)):
+                if data[d] == '0':
+                    mes += f'{d} {columns[d]} - ❌\n'
+                else: 
+                    mes += f'{d} {columns[d]} - ✅\n'
+
+            main_mes += mes + '\n\n'
+        main_mes += f'{math.ceil(len(daily_tasks)/7)}/{math.ceil(len(daily_tasks)/7)}'
+        
+        await callback.message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_friend_kb)
+    else:
+        await callback.message.answer('‼️У вашего друга не созданы задания')
+
+
+@router.callback_query(F.data == 'arrow_left_friend')
+async def daily_statics_friend_allow_left_handler(callback: CallbackQuery):
+    await callback.answer()
+    pages = str(callback.message.text).split()[-1].replace('/', ' ').split()
+    current_n, total_n = int(pages[0]), int(pages[1])
+    code = list(str(callback.message.text).split())[3]
+    id_user = await sql.get_id_by_password_sql(code)
+
+    if current_n != 1:
+        page_difference = total_n-current_n+1
+        start_page = page_difference*7+1
+        stop_page = start_page+7
+
+        daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
+        main_mes = '📈Ежедневная статистика\n\n'
+        for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
+            mes = f'Дата:\n{data[0]}\n'
+            columns = await sql.get_all_columns_sql(id_user)
+            columns = [column.replace('_', ' ') for column in columns]
+            for d in range(1, len(data)):
+                if data[d] == '0':
+                    mes += f'{d} {columns[d]} - ❌\n'
+                else: 
+                    mes += f'{d} {columns[d]} - ✅\n'
+
+            main_mes += mes + '\n\n'
+        main_mes += f'{current_n-1}/{math.ceil(len(daily_tasks)/7)}'
+        
+        await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_friend_kb)
+
+
+@router.callback_query(F.data == 'arrow_right_friend')
+async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
+    await callback.answer()
+    pages = str(callback.message.text).split()[-1].replace('/', ' ').split()
+    current_n, total_n = int(pages[0]), int(pages[1])
+    code = list(str(callback.message.text).split())[3]
+    id_user = await sql.get_id_by_password_sql(code)
+
+    if total_n != current_n:
+        page_difference = total_n-current_n+1
+        start_page = page_difference*7-13
+        stop_page = start_page+7
+
+        daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
+        main_mes = 'Ежедневная статистика\n\n'
+        for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
+            mes = f'Дата:\n{data[0]}\n'
+            columns = await sql.get_all_columns_sql(id_user)
+            columns = [column.replace('_', ' ') for column in columns]
+            for d in range(1, len(data)):
+                if data[d] == '0':
+                    mes += f'{d} {columns[d]} - ❌\n'
+                else: 
+                    mes += f'{d} {columns[d]} - ✅\n'
+
+            main_mes += mes + '\n\n'
+        main_mes += f'{current_n+1}/{math.ceil(len(daily_tasks)/7)}'
+        
+        await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_friend_kb)
