@@ -8,9 +8,8 @@ async def start_sql():
     db = sql.connect('data.db')
     cur = sql.Cursor(db)
 
-    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, subscription TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, subscription TEXT, reminder TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT)")
-    db.commit()
 
 
 async def connection_sql():
@@ -21,7 +20,7 @@ async def connection_sql():
 
 
 async def add_client_sql(tg_id):
-    cur.execute("INSERT INTO clients VALUES(?, ?)", (tg_id, 0,))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?)", (tg_id, 0, 0,))
     db.commit()
 
 

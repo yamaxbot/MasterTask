@@ -485,3 +485,17 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
         main_mes += f'{current_n+1}/{math.ceil(len(daily_tasks)/7)}'
         
         await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_friend_kb)
+
+
+@router.message(F.text == '🔔Напоминание')
+async def reminder_main_handler(message: Message, state: FSMContext):
+    await state.clear()
+    if message.from_user.id == 5227185772:
+        await message.answer('Вы можете добавить время, в которое вам нужно отправить напоминание.\n\nТакже вы можете удалить все напоминания', reply_markup=kb.inline_add_delete_reminder_kb)
+    else:
+        await message.answer('Данная функция на данный момент не работает, но скоро будет работать')
+
+
+@router.callback_query(F.data == 'add_time')
+async def add_time_handler(callback: CallbackQuery):
+    await callback.answer('работает реально')

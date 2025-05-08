@@ -66,3 +66,8 @@ inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
 inline_arroy_daily_tasks_friend_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='⬅', callback_data='arrow_left_friend'), InlineKeyboardButton(text='➡', callback_data='arrow_right_friend')]
 ])
+
+
+inline_add_delete_reminder_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Добавить время', callback_data='add_time'), InlineKeyboardButton(text='Удалить время', callback_data='delete_time')]
+])
