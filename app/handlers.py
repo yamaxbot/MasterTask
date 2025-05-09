@@ -21,6 +21,9 @@ class AddOneTask(StatesGroup):
 class PasswordFriend(StatesGroup):
     password = State()
 
+class ReminderTime(StatesGroup):
+    time = State()
+
 
 @router.message(Command('start'))
 async def command_start_handler(message: Message, state: FSMContext):
@@ -497,5 +500,32 @@ async def reminder_main_handler(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == 'add_time')
-async def add_time_handler(callback: CallbackQuery):
-    await callback.answer('работает реально')
+async def add_time_handler(callback: CallbackQuery, state: FSMContext):
+    global ls_time
+    ls_time = []
+    await callback.message.answer('Пишите по одному время, в которое вам нужно отправлять напоминание. Формат должен быть строго следующим 00:00')
+    await state.set_state(ReminderTime.time)
+
+
+@router.message(ReminderTime.time)
+async def add_time_state_handler(message: Message):
+    global ls_time
+    if message.text not in ls_time:
+        ls_time.append(message.text)
+        await message.answer('Напишите ещё время или нажмите кнопку хватит', reply_markup=kb.inline_stop_add_time_kb)
+    else:
+        await message.answer('Такое время уже есть, введите другое или нажмите кнопку хватит', reply_markup=kb.inline_stop_add_time_kb)
+
+
+@router.callback_query(F.data == 'add_time_stop')
+async def add_time_stop_state_handler(callback: CallbackQuery):
+    global ls_time
+    ls_time_str = '/'.join(ls_time)
+    await sql.add_times_user_sql(callback.from_user.id, ls_time_str)
+    await callback.message.answer('Мы будем отправлять вам напоминания в это время по мск, если у вас будут недоделаны задания')
+
+
+@router.callback_query(F.data == 'delete_time')
+async def delete_time_inline_kb_handler(callback: CallbackQuery):
+    await sql.delete_times_user_sql(callback.from_user.id)
+    await callback.answer('Ваши напоминания удалены, можете создать новые!')

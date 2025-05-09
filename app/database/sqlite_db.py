@@ -8,7 +8,7 @@ async def start_sql():
     db = sql.connect('data.db')
     cur = sql.Cursor(db)
 
-    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, subscription TEXT, reminder TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT)")
 
 
@@ -44,6 +44,7 @@ async def create_new_table_sql(tasks, tg_id):
     for i in range(len(tasks)):
         values_ls.append('0')
     cur.execute(sql_request, tuple(values_ls))
+    cur.execute("UPDATE clients SET table = ? WHERE id = ?", ('1', tg_id, ))
     db.commit()
 
 
@@ -142,3 +143,17 @@ async def get_all_friends_codes_sql():
 async def get_id_by_password_sql(password):
     data = cur.execute("SELECT * FROM friend_statistics WHERE password = ?", (password, )).fetchone()
     return data[0]
+
+
+async def add_times_user_sql(tg_id, times):
+    cur.execute("UPDATE clients SET reminder = ? WHERE id = ?", (times, tg_id, ))
+    db.commit()
+
+
+async def delete_times_user_sql(tg_id):
+    cur.execute("UPDATE clients SET reminder = ? WHERE id = ?", ('0', tg_id, ))
+    db.commit()
+
+
+async def get_times_all_users_sql():
+    return cur.execute("SELECT * FROM clients").fetchall()

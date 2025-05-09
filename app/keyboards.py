@@ -71,3 +71,8 @@ inline_arroy_daily_tasks_friend_kb = InlineKeyboardMarkup(inline_keyboard=[
 inline_add_delete_reminder_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Добавить время', callback_data='add_time'), InlineKeyboardButton(text='Удалить время', callback_data='delete_time')]
 ])
+
+
+inline_stop_add_time_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Хватит', callback_data='add_time_stop')]
+])
