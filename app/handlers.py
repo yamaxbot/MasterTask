@@ -3,7 +3,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+
 import math
+import datetime
 
 import app.database.sqlite_db as sql
 import app.keyboards as kb
@@ -20,10 +22,6 @@ class AddOneTask(StatesGroup):
 
 class PasswordFriend(StatesGroup):
     password = State()
-
-class ReminderTime(StatesGroup):
-    time = State()
-
 
 @router.message(Command('start'))
 async def command_start_handler(message: Message, state: FSMContext):
@@ -205,6 +203,8 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
 @router.message(F.text == '📊Статистика')
 async def general_statistics_handler(message: Message, state: FSMContext):
     await state.clear()
+    time_moscow = datetime.timezone(datetime.timedelta(hours=3))
+    today = str(datetime.datetime.now(time_moscow).date())
     aval_tasks = await sql.availability_of_table(message.from_user.id)
     if aval_tasks == 'yes':
         data = await sql.get_all_daily_tasks_sql(message.from_user.id)
@@ -226,7 +226,11 @@ async def general_statistics_handler(message: Message, state: FSMContext):
             for i in range(len(data)):
                 total_task += int(data[i][j])
 
-                if data[i][j] == '0':
+                if data[i][0] == today:
+                    shock_mode += 0
+                    if data[i][j] == '1':
+                        shock_mode += 1
+                elif data[i][j] == '0':
                     shock_mode = 0
                 else:
                     shock_mode += 1
@@ -364,6 +368,8 @@ async def friend_code_state_password_handler(message: Message, state: FSMContext
 @router.callback_query(F.data == 'general_statistics')
 async def general_statistics_friend_handler(callback: CallbackQuery):
     await callback.answer()
+    time_moscow = datetime.timezone(datetime.timedelta(hours=3))
+    today = str(datetime.datetime.now(time_moscow).date())
     friend_password = list(str(callback.message.text).split())
     id_user = await sql.get_id_by_password_sql(friend_password[4])
 
@@ -388,10 +394,15 @@ async def general_statistics_friend_handler(callback: CallbackQuery):
             for i in range(len(data)):
                 total_task += int(data[i][j])
 
-                if data[i][j] == '0':
+                if data[i][0] == today:
+                    shock_mode += 0
+                    if data[i][j] == '1':
+                        shock_mode += 1
+                elif data[i][j] == '0':
                     shock_mode = 0
                 else:
                     shock_mode += 1
+
             mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await callback.message.answer(mes)
     else:
@@ -442,7 +453,7 @@ async def daily_statics_friend_allow_left_handler(callback: CallbackQuery):
         stop_page = start_page+7
 
         daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
-        main_mes = '📈Ежедневная статистика\n\n'
+        main_mes = f'🔐Код вашего друга: {code}\n\n📈Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
             mes = f'Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(id_user)
@@ -473,7 +484,7 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
         stop_page = start_page+7
 
         daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
-        main_mes = 'Ежедневная статистика\n\n'
+        main_mes = f'🔐Код вашего друга: {code}\n\n📈Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
             mes = f'Дата:\n{data[0]}\n'
             columns = await sql.get_all_columns_sql(id_user)
@@ -493,39 +504,62 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
 @router.message(F.text == '🔔Напоминание')
 async def reminder_main_handler(message: Message, state: FSMContext):
     await state.clear()
-    if message.from_user.id == 5227185772:
-        await message.answer('Вы можете добавить время, в которое вам нужно отправить напоминание.\n\nТакже вы можете удалить все напоминания', reply_markup=kb.inline_add_delete_reminder_kb)
+    data = await sql.get_times_user_sql(message.from_user.id)
+    if data[2] == '0':
+        await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
     else:
-        await message.answer('Данная функция на данный момент не работает, но скоро будет работать')
+        times = str(data[2]).replace('/', '\n')
+        await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
 
 
-@router.callback_query(F.data == 'add_time')
-async def add_time_handler(callback: CallbackQuery, state: FSMContext):
-    global ls_time
-    ls_time = []
-    await callback.message.answer('Пишите по одному время, в которое вам нужно отправлять напоминание. Формат должен быть строго следующим 00:00')
-    await state.set_state(ReminderTime.time)
-
-
-@router.message(ReminderTime.time)
-async def add_time_state_handler(message: Message):
-    global ls_time
-    if message.text not in ls_time:
-        ls_time.append(message.text)
-        await message.answer('Напишите ещё время или нажмите кнопку хватит', reply_markup=kb.inline_stop_add_time_kb)
+@router.callback_query(F.data == 'edit_time')
+async def edit_time_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    count_colon = str(callback.message.text).count(':')
+    if count_colon == 0:
+        await callback.message.answer('👨‍💻Нажмите на определённое время, в которое вам нужно отправить напоминание. Если вы хотите удалить определённое время, то нажмите на это время ещё раз и оно удалится\n\n📒Ваши напоминания сработают в это время по МСК:', reply_markup=kb.inline_all_times_reminder_kb)
     else:
-        await message.answer('Такое время уже есть, введите другое или нажмите кнопку хватит', reply_markup=kb.inline_stop_add_time_kb)
+        times_data = str(callback.message.text).split('📒Ваши напоминания сработают в это время по МСК:')
+        await callback.message.answer(f'👨‍💻Нажмите на определённое время, в которое вам нужно отправить напоминание. Если вы хотите удалить определённое время, то нажмите на это время ещё раз и оно удалится\n\n📒Ваши напоминания сработают в это время по МСК:{times_data[1]}', reply_markup=kb.inline_all_times_reminder_kb)
+    await callback.message.delete()
 
 
-@router.callback_query(F.data == 'add_time_stop')
+@router.callback_query(F.data.startswith('remtime_'))
+async def edit_time_callback_handler(callback: CallbackQuery):
+    await callback.answer()
+    callback_time = list(str(callback.data).split('_'))[1]
+    callback_time = callback_time[:2] + ':' + callback_time[2:]
+    
+    mes_split = str(callback.message.text).split('📒Ваши напоминания сработают в это время по МСК:')
+    times_data = mes_split[1].split('\n')
+    del times_data[0]
+    if callback_time not in times_data:
+        text = callback.message.text + '\n' + callback_time
+        await callback.message.edit_text(text=text, reply_markup=kb.inline_all_times_reminder_kb)
+    else:
+        ind_callback_time = times_data.index(callback_time)
+        del times_data[ind_callback_time]
+        text = mes_split[0] + '📒Ваши напоминания сработают в это время по МСК:' + '\n' + '\n'.join(times_data)
+        await callback.message.edit_text(text=text, reply_markup=kb.inline_all_times_reminder_kb)
+
+
+@router.callback_query(F.data == 'save_time')
 async def add_time_stop_state_handler(callback: CallbackQuery):
-    global ls_time
-    ls_time_str = '/'.join(ls_time)
-    await sql.add_times_user_sql(callback.from_user.id, ls_time_str)
-    await callback.message.answer('Мы будем отправлять вам напоминания в это время по мск, если у вас будут недоделаны задания')
-
-
-@router.callback_query(F.data == 'delete_time')
-async def delete_time_inline_kb_handler(callback: CallbackQuery):
-    await sql.delete_times_user_sql(callback.from_user.id)
-    await callback.answer('Ваши напоминания удалены, можете создать новые!')
+    await callback.answer()
+    times = list(str(callback.message.text).split('📒Ваши напоминания сработают в это время по МСК:'))[1]
+    if times == '':
+        await sql.add_times_user_sql(callback.from_user.id, '0')
+        await callback.message.delete()
+        await callback.message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
+        await callback.message.answer('✅Сохранено!')
+    else:
+        times = times.replace('\n', '/')
+        times = times[1:]
+        await sql.add_times_user_sql(callback.from_user.id, times)
+        await callback.message.delete()
+        
+        data = await sql.get_times_user_sql(callback.from_user.id)
+        times = str(data[2]).replace('/', '\n')
+        await callback.message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
+            
+        await callback.message.answer('✅Сохранено!')

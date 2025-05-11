@@ -17,7 +17,7 @@ async def main():
 
 async def new_date(bot):
     await sql.connection_sql()
-    old_date = '2025-05-10'
+    old_date = '2025-05-11'
     while True:
         time_moscow = datetime.timezone(datetime.timedelta(hours=3))
         today = str(datetime.datetime.now(time_moscow).date())

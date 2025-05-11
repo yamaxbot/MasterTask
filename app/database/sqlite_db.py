@@ -157,3 +157,7 @@ async def delete_times_user_sql(tg_id):
 
 async def get_times_all_users_sql():
     return cur.execute("SELECT * FROM clients").fetchall()
+
+
+async def get_times_user_sql(tg_id):
+    return cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, )).fetchone()

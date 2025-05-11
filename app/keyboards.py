@@ -69,10 +69,21 @@ inline_arroy_daily_tasks_friend_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 
 inline_add_delete_reminder_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Добавить время', callback_data='add_time'), InlineKeyboardButton(text='Удалить время', callback_data='delete_time')]
+    [InlineKeyboardButton(text='Редактировать время', callback_data='edit_time')]
 ])
 
 
 inline_stop_add_time_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Хватит', callback_data='add_time_stop')]
+])
+
+
+inline_all_times_reminder_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='00:00', callback_data='remtime_0000'), InlineKeyboardButton(text='01:00', callback_data='remtime_0100'), InlineKeyboardButton(text='02:00', callback_data='remtime_0200'), InlineKeyboardButton(text='03:00', callback_data='remtime_0300')],
+    [InlineKeyboardButton(text='04:00', callback_data='remtime_0400'), InlineKeyboardButton(text='05:00', callback_data='remtime_0500'), InlineKeyboardButton(text='06:00', callback_data='remtime_0600'), InlineKeyboardButton(text='07:00', callback_data='remtime_0700')],
+    [InlineKeyboardButton(text='08:00', callback_data='remtime_0800'), InlineKeyboardButton(text='09:00', callback_data='remtime_0900'), InlineKeyboardButton(text='10:00', callback_data='remtime_1000'), InlineKeyboardButton(text='11:00', callback_data='remtime_1100')],
+    [InlineKeyboardButton(text='12:00', callback_data='remtime_1200'), InlineKeyboardButton(text='13:00', callback_data='remtime_1300'), InlineKeyboardButton(text='14:00', callback_data='remtime_1400'), InlineKeyboardButton(text='15:00', callback_data='remtime_1500')],
+    [InlineKeyboardButton(text='16:00', callback_data='remtime_1600'), InlineKeyboardButton(text='17:00', callback_data='remtime_1700'), InlineKeyboardButton(text='18:00', callback_data='remtime_1800'), InlineKeyboardButton(text='19:00', callback_data='remtime_1900')],
+    [InlineKeyboardButton(text='20:00', callback_data='remtime_2000'), InlineKeyboardButton(text='21:00', callback_data='remtime_2100'), InlineKeyboardButton(text='22:00', callback_data='remtime_2200'), InlineKeyboardButton(text='23:00', callback_data='remtime_2300')],
+    [InlineKeyboardButton(text='Сохранить', callback_data='save_time')]
 ])
