@@ -16,6 +16,7 @@ import app.other_func as otf
 
 router = Router()
 tasks_sl = {}
+message_id_user = {}
 
 
 class AddTasks(StatesGroup):
@@ -531,6 +532,12 @@ async def reminder_main_handler(message: Message, state: FSMContext):
             currency="XTR",
             reply_markup=await kb.donate_reminder_kb()
         )
+        if message.from_user.id in message_id_user.keys():
+            ls = list(message_id_user[message.from_user.id])
+            ls.append(donation_message.message_id)
+            message_id_user[message.from_user.id] = ls
+        else:
+            message_id_user[message.from_user.id] = [donation_message.message_id]
 
 
 @router.pre_checkout_query()
@@ -540,20 +547,12 @@ async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
 
 @router.message(F.successful_payment.invoice_payload == 'donate_reminder')
 async def procces_donate_reminer_handler(message: Message, bot: Bot):
-    donate_id = await sql.get_reminder_donates_id_sql()
-    if str(message.from_user.id) not in donate_id:
-        await sql.add_reminder_donater_sql(message.from_user.id, message.successful_payment.telegram_payment_charge_id)
-        await message.answer('✅Теперь вы можете пользоваться напоминалками.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
-    else:
-        transaction_id = message.successful_payment.telegram_payment_charge_id
-        try:
-            await bot.refund_star_payment(
-                user_id=message.from_user.id,
-                telegram_payment_charge_id=transaction_id
-            )
-            await message.answer('❌Вы уже покупали данную функцию, поэтому мы вернули вам 100 звёзд.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
-        except Exception as e:
-            print(e)
+    await sql.add_reminder_donater_sql(message.from_user.id, message.successful_payment.telegram_payment_charge_id)
+    await message.answer('✅Теперь вы можете пользоваться напоминалками.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
+    ls = message_id_user[message.from_user.id]
+    for mes_id in ls:
+        await bot.delete_message(message.from_user.id, mes_id)
+    del message_id_user[message.from_user.id]
 
 
 @router.message(Command('refund'))
