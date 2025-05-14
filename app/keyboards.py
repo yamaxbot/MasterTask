@@ -87,3 +87,10 @@ inline_all_times_reminder_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='20:00', callback_data='remtime_2000'), InlineKeyboardButton(text='21:00', callback_data='remtime_2100'), InlineKeyboardButton(text='22:00', callback_data='remtime_2200'), InlineKeyboardButton(text='23:00', callback_data='remtime_2300')],
     [InlineKeyboardButton(text='Сохранить', callback_data='save_time')]
 ])
+
+
+async def donate_reminder_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Оплатить 100 ⭐️", pay=True)
+    
+    return builder.as_markup()

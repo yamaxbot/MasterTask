@@ -1,8 +1,11 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery, PreCheckoutQuery, LabeledPrice
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram import Bot
 
 import math
 import datetime
@@ -12,6 +15,7 @@ import app.keyboards as kb
 import app.other_func as otf
 
 router = Router()
+tasks_sl = {}
 
 
 class AddTasks(StatesGroup):
@@ -41,37 +45,39 @@ async def command_help_handler(message: Message, state: FSMContext):
 @router.message(F.text == '📖Создать задания')
 async def create_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
-    global tasks_ls 
-    tasks_ls = []
+    global tasks_sl
     aval_table = await sql.availability_of_table(message.from_user.id)
     if aval_table == 'no':
         await message.answer('‼️Пишите задания по одному сообщению.')
         await state.set_state(AddTasks.title)
+        tasks_sl[message.from_user.id] = []
     else:
         await message.answer('‼️У вас уже созданы задания, вы их можете отредактировать нажав на кнопку Редактировать задания')
 
 
 @router.message(AddTasks.title)
 async def create_tasks_state_handler(message: Message, state: FSMContext):
-    global tasks_ls
+    global tasks_sl
     text = message.text.replace(' ', '_')
-    if message.text not in tasks_ls:
-        tasks_ls.append(text)
+    if message.text not in tasks_sl[message.from_user.id]:
+        ls = list(tasks_sl[message.from_user.id])
+        ls.append(text)
+        tasks_sl[message.from_user.id] = ls
         await message.answer("😉Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
     else:
         await message.answer("‼️Точно такое задание уже есть. Напишите ещё одно задания или нажмите кнопку Хватит", reply_markup=kb.stop_added_task_inlinekeyboard)
 
+
 @router.callback_query(F.data == 'stop_add_task')
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
-    global tasks_ls
+    global tasks_sl
 
-    if len(tasks_ls) != 0:
+    if len(tasks_sl[callback.from_user.id]) != 0:
         await callback.answer()
-        await sql.create_new_table_sql(tasks_ls, callback.from_user.id)
+        await sql.create_new_table_sql(tasks_sl[callback.from_user.id], callback.from_user.id)
         await callback.message.answer(f'✅Вы добавили задания, теперь вам доступен просмотр статистики и выполнение заданий')
         await state.clear()
-        tasks_ls = []
-
+        del tasks_sl[callback.from_user.id]
 
 
 @router.message(F.text == '✏️Выполнить задания')
@@ -261,10 +267,10 @@ async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
 async def edit_task_add_state_handler(message: Message, state: FSMContext):
     columns = await sql.get_all_columns_sql(message.from_user.id)
     text = message.text.replace(' ', '_')
+    await state.clear()
     if text not in columns:
         await sql.add_one_column_sql(message.from_user.id, text)
         await message.answer(f'✅Вы добавили новое задание "{message.text}"')
-        await state.clear()
     else:
         await message.answer('‼️Точно такоеже задание у вас уже есть. Напишите другое задание или отмените действие с помощью кнопки Отменить', reply_markup=kb.inline_cancel_kb)
 
@@ -354,13 +360,14 @@ async def friend_code_state_handler(callback: CallbackQuery, state: FSMContext):
 @router.message(PasswordFriend.password)
 async def friend_code_state_password_handler(message: Message, state: FSMContext):
     all_codes = await sql.get_all_friends_codes_sql()
-    id_by_code = await sql.get_id_by_password_sql(message.text)
+    if message.text in all_codes:
+        id_by_code = await sql.get_id_by_password_sql(message.text)
 
-    if str(message.from_user.id) == id_by_code:
-        await message.answer('‼️Это ваш собственный код')
-    elif message.text in all_codes:
-        await message.answer(f'🔐Код который вы ввели: `{message.text}`\n\n🙋‍♂️Вы можете посмотреть 2 статистики вашего друга', reply_markup=kb.inline_friend_statistics_all_kb, parse_mode="MARKDOWN")
-        await state.clear()
+        if str(message.from_user.id) == id_by_code:
+            await message.answer('‼️Это ваш собственный код. Введите другой код или нажмите кнопку отменить!')
+        elif message.text in all_codes:
+            await message.answer(f'🔐Код который вы ввели: `{message.text}`\n\n🙋‍♂️Вы можете посмотреть 2 статистики вашего друга', reply_markup=kb.inline_friend_statistics_all_kb, parse_mode="MARKDOWN")
+            await state.clear()
     else:
         await message.answer('‼️Такого кода нет или он уже неактивен. Введите другой код или нажмите кнопку Отменить', reply_markup=kb.inline_cancel_kb)
 
@@ -504,12 +511,63 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
 @router.message(F.text == '🔔Напоминание')
 async def reminder_main_handler(message: Message, state: FSMContext):
     await state.clear()
-    data = await sql.get_times_user_sql(message.from_user.id)
-    if data[2] == '0':
-        await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
+    donate_id = await sql.get_reminder_donates_id_sql()
+    
+    if str(message.from_user.id) in donate_id:
+        data = await sql.get_times_user_sql(message.from_user.id)
+        if data[2] == '0':
+            await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
+        else:
+            times = str(data[2]).replace('/', '\n')
+            await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
     else:
-        times = str(data[2]).replace('/', '\n')
-        await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
+        prices = [LabeledPrice(label="XTR", amount=100)]
+        donation_message = await message.answer_invoice(
+            title="Напоминания",
+            description="⭐Данная функция 100 звёзд. Вы сможете ставить себе уведомления на определённое время, чтобы вы точно не забыли выполнить все задания",
+            prices=prices,
+            provider_token="",
+            payload="donate_reminder",
+            currency="XTR",
+            reply_markup=await kb.donate_reminder_kb()
+        )
+
+
+@router.pre_checkout_query()
+async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
+    await pre_checkout_query.answer(ok=True)
+    
+
+@router.message(F.successful_payment.invoice_payload == 'donate_reminder')
+async def procces_donate_reminer_handler(message: Message, bot: Bot):
+    donate_id = await sql.get_reminder_donates_id_sql()
+    if str(message.from_user.id) not in donate_id:
+        await sql.add_reminder_donater_sql(message.from_user.id, message.successful_payment.telegram_payment_charge_id)
+        await message.answer('✅Теперь вы можете пользоваться напоминалками.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
+    else:
+        transaction_id = message.successful_payment.telegram_payment_charge_id
+        try:
+            await bot.refund_star_payment(
+                user_id=message.from_user.id,
+                telegram_payment_charge_id=transaction_id
+            )
+            await message.answer('❌Вы уже покупали данную функцию, поэтому мы вернули вам 100 звёзд.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
+        except Exception as e:
+            print(e)
+
+
+@router.message(Command('refund'))
+async def command_refund_handler(message: Message, bot: Bot, command: CommandObject):
+    transaction_id = command.args
+    data = await sql.get_id_by_transaction_id_sql(transaction_id)
+    user_id = data[0]
+    try:
+        await bot.refund_star_payment(
+            user_id=user_id,
+            telegram_payment_charge_id=transaction_id
+        )
+    except Exception as e:
+        print(e)
 
 
 @router.callback_query(F.data == 'edit_time')
