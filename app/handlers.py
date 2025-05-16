@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram import Bot
+from config import ADMINS
 
 import math
 import datetime
@@ -31,6 +32,9 @@ class AddOneTask(StatesGroup):
 class PasswordFriend(StatesGroup):
     password = State()
 
+class NewsLetterState(StatesGroup):
+    mes = State()
+
 
 
 @router.message(Command('start'))
@@ -42,12 +46,39 @@ async def command_start_handler(message: Message, state: FSMContext):
         await sql.add_client_sql(message.from_user.id)
 
 
-
 @router.message(Command('help'))
 async def command_help_handler(message: Message, state: FSMContext):
     await state.clear()
     await message.answer('🗒Инструкция\n\n✏Выполнение заданий:\nПервым делом вам нужно создать ваши ежедневне задания с помощью кнопки Создать задания. После создания заданий вы можете ежедневно отмечать задания, которые вы сделали, с помощью кнопки Выполнить задания. Также если вы хотите удалить какое либо задание, или добавить новое, вы можете это сделать, нажав на кнопку Редактировать задания\n\n📊Статистика:\nЧтобы узнать статистику, где будет показываться сколько заданий вы сделали всего, нужно нажать на кнопку Статистика.\nЕсли вы хотите узнать в какие дни, какие задания вы делали, нужно нажать на кнопку ежедневная статистика.')
 
+
+@router.message(Command('statistics'))
+async def statistics_admin_command_handler(message: Message, state: FSMContext):
+    await state.clear()
+    if message.from_user.id in ADMINS:
+        all_users, new_users = await sql.statistics_command_sql()
+        await message.answer(f'📈Статистика:\n\n👨‍💻Всего пользователей: {all_users}\n\n⏰️ Новых за сегодня: {new_users}')
+
+
+@router.message(Command('newsletter'))
+async def newsletter_admins_command_handler(message: Message, state: FSMContext):
+    if message.from_user.id in ADMINS:
+        await state.set_state(NewsLetterState.mes)
+        await message.answer('Отправьте сообщение которое хотите разослать')
+
+
+@router.message(NewsLetterState.mes)
+async def newsletter_admins_command_state_handler(message: Message, state: FSMContext, bot: Bot):
+    clients = await sql.get_all_id_users_sql()
+    await state.clear()
+    total = 0
+    for client in clients:
+        try:
+            await message.send_copy(chat_id=client)
+            total = total + 1
+        except:
+            continue
+    await message.answer(text=f'Сообщение разослано, {total} людей')
 
 
 @router.message(F.text == '📖Создать задания')
@@ -208,7 +239,7 @@ async def reminder_main_handler(message: Message, state: FSMContext):
 async def create_tasks_state_handler(message: Message, state: FSMContext):
     global tasks_sl
     text = message.text.replace(' ', '_')
-    if message.text not in tasks_sl[message.from_user.id]:
+    if text not in tasks_sl[message.from_user.id]:
         ls = list(tasks_sl[message.from_user.id])
         ls.append(text)
         tasks_sl[message.from_user.id] = ls
@@ -325,10 +356,10 @@ async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
 async def edit_task_add_state_handler(message: Message, state: FSMContext):
     columns = await sql.get_all_columns_sql(message.from_user.id)
     text = message.text.replace(' ', '_')
-    await state.clear()
     if text not in columns:
         await sql.add_one_column_sql(message.from_user.id, text)
         await message.answer(f'✅Вы добавили новое задание "{message.text}"')
+        await state.clear()
     else:
         await message.answer('‼️Точно такоеже задание у вас уже есть. Напишите другое задание или отмените действие с помощью кнопки Отменить', reply_markup=kb.inline_cancel_kb)
 

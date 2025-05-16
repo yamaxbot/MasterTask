@@ -8,11 +8,12 @@ async def start_sql():
     db = sql.connect('data.db')
     cur = sql.Cursor(db)
 
-    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT, registration_date TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS reminder_donate(id TEXT, date TEXT, donate_key TEXT)")
 
     db.commit()
+
 
 async def connection_sql():
     global db, cur 
@@ -22,7 +23,8 @@ async def connection_sql():
 
 
 async def add_client_sql(tg_id):
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?)", (tg_id, 0, 0,))
+    today = str(datetime.datetime.now(time_moscow).date())
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, 0, 0, today, ))
     db.commit()
 
 
@@ -187,3 +189,10 @@ async def get_transaction_id_sql(tg_id):
 async def get_id_by_transaction_id_sql(transaction_id):
     data = cur.execute("SELECT * FROM reminder_donate WHERE donate_key = ?", (transaction_id, )).fetchone()
     return data
+
+
+async def statistics_command_sql():
+    today = str(datetime.datetime.now(time_moscow).date())
+    all_users = cur.execute("SELECT * FROM clients").fetchall()
+    new_users = cur.execute("SELECT * FROM clients WHERE registration_date = ?", (today, )).fetchall()
+    return len(all_users), len(new_users)
