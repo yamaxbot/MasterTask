@@ -9,7 +9,7 @@ async def start_sql():
     cur = sql.Cursor(db)
 
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT, registration_date TEXT)")
-    cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS reminder_donate(id TEXT, date TEXT, donate_key TEXT)")
 
     db.commit()
@@ -123,16 +123,16 @@ async def availability_of_table(tg_id):
 
 
 async def get_user_friend_statistics_sql(tg_id):
-    return cur.execute("SELECT * FROM friend_statistics WHERE id = ?", (tg_id, )).fetchone()
+    return cur.execute("SELECT * FROM friend_statistics WHERE id = ? AND active = ?", (tg_id, '1', )).fetchone()
 
 
 async def add_code_friend_statistics_sql(tg_id, code):
-    cur.execute('INSERT INTO friend_statistics VALUES(?, ?)', (tg_id, code, ))
+    cur.execute('INSERT INTO friend_statistics VALUES(?, ?, ?)', (tg_id, code, '1'))
     db.commit()
 
 
-async def delete_code_friend_statistics_sql(tg_id):
-    cur.execute("DELETE FROM friend_statistics WHERE id = ?", (tg_id, ))
+async def not_active_code_friend_statistics_sql(tg_id):
+    cur.execute("UPDATE friend_statistics SET active = ? WHERE id = ?", ('0', tg_id, ))
     db.commit()
 
 

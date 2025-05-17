@@ -420,9 +420,13 @@ async def create_code_handler(callback: CallbackQuery):
     await callback.answer()
     data = await sql.get_user_friend_statistics_sql(callback.from_user.id)
     if data == None:
-        code = await otf.generation_code()
-        await sql.add_code_friend_statistics_sql(callback.from_user.id, code)
-        await callback.message.edit_text(f'🔑Ваш код: `{code}`\n🫵Кликните по нему чтобы скопировать\n\n🔓Любой кому вы отправите этот код, сможет посмотреть вашу статистику\n\n🗑Если вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb, parse_mode="MARKDOWN")
+        all_code = await sql.get_all_friends_codes_sql()
+        while True:
+            code = await otf.generation_code()
+            if code not in all_code:
+                await sql.add_code_friend_statistics_sql(callback.from_user.id, code)
+                await callback.message.edit_text(f'🔑Ваш код: `{code}`\n🫵Кликните по нему чтобы скопировать\n\n🔓Любой кому вы отправите этот код, сможет посмотреть вашу статистику\n\n🗑Если вы хотите удалить код, чтобы ваши друзья потеряли доступ к вашей статистике, нажмите кнопку Удалить код', reply_markup=kb.inline_create_delete_code_kb, parse_mode="MARKDOWN")
+                break
     else:
         await callback.message.answer('‼️У вас уже есть код')
 
@@ -435,7 +439,7 @@ async def delete_code_handler(callback: CallbackQuery):
     if data == None:
         await callback.message.answer('‼️У вас нет кода')
     else:
-        await sql.delete_code_friend_statistics_sql(callback.from_user.id)
+        await sql.not_active_code_friend_statistics_sql(callback.from_user.id)
         await callback.message.edit_text('🔑У вас пока нет кода. Вы можете его создать, нажав на кнопку создать код', reply_markup=kb.inline_create_delete_code_kb)
         
 
