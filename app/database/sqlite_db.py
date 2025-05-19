@@ -24,7 +24,7 @@ async def connection_sql():
 
 async def add_client_sql(tg_id):
     today = str(datetime.datetime.now(time_moscow).date())
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, 0, 0, today, ))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, 1, 0, today, ))
     db.commit()
 
 
@@ -36,19 +36,10 @@ async def get_all_id_users_sql():
     return all_id
 
 
-async def create_new_table_sql(tasks, tg_id):
-    today = datetime.datetime.now(time_moscow).date()
+async def create_new_table_sql(tg_id):
+    today = str(datetime.datetime.now(time_moscow).date())
     cur.execute(f"CREATE TABLE IF NOT EXISTS {'tasks_table'+str(tg_id)}(date TEXT)")
-
-    for task in tasks:
-        cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD COLUMN [{task}] TEXT DEFAULT '0'")
-    str_mark = str(['?' for i in range(len(tasks)+1)]).replace("'", '')
-    sql_request = f"INSERT INTO {'tasks_table'+str(tg_id)} VALUES({str_mark[1:-1]})"
-    values_ls = [str(today)]
-    for i in range(len(tasks)):
-        values_ls.append('0')
-    cur.execute(sql_request, tuple(values_ls))
-    cur.execute("UPDATE clients SET avail_table = ? WHERE id = ?", ('1', tg_id, ))
+    cur.execute(f"INSERT INTO {'tasks_table'+str(tg_id)} VALUES(?)", (today, ))
     db.commit()
 
 
@@ -82,8 +73,9 @@ async def get_all_daily_tasks_sql(tg_id):
     return cur.execute(f"SELECT * FROM {'tasks_table'+str(tg_id)}").fetchall()
     
 
-async def add_one_column_sql(tg_id, text):
-    cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD [{text}] TEXT DEFAULT '0'")
+async def add_columns_sql(tg_id, columns):
+    for text in columns:
+        cur.execute(f"ALTER TABLE {'tasks_table'+str(tg_id)} ADD [{text}] TEXT DEFAULT '0'")
     db.commit()
 
 
