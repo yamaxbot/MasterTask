@@ -4,10 +4,9 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 
 client_reply_keyboards = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='🔔Напоминание')],
-    [KeyboardButton(text='📊Статистика')],
+    [KeyboardButton(text='🔔Напоминание'), KeyboardButton(text='🙋‍♂️Статистика друга')],
     [KeyboardButton(text='✏️Выполнить задания'), KeyboardButton(text='📈Ежедневная статистика')],
-    [KeyboardButton(text='📝Редактировать задания'), KeyboardButton(text='🙋‍♂️Статистика друга')],
+    [KeyboardButton(text='📝Редактировать задания'), KeyboardButton(text='📊Статистика')],
 
 ], resize_keyboard=True)
 
@@ -30,7 +29,7 @@ inline_arroy_daily_tasks_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 
 edit_tasks_inline_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Добавить задание', callback_data='add_task'), InlineKeyboardButton(text='Удалить задание', callback_data='delete_task')]
+    [InlineKeyboardButton(text='Добавить задания', callback_data='add_task'), InlineKeyboardButton(text='Удалить задания', callback_data='delete_task')]
 ])
 
 

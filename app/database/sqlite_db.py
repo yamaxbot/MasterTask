@@ -105,10 +105,8 @@ async def new_date_sql():
 
 
 async def availability_of_table(tg_id):
-    data = cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
-    name_table = 'tasks_table'+str(tg_id)
-    data = [i[0] for i in data]
-    if name_table in data:
+    data = cur.execute(f"SELECT * FROM {'tasks_table'+str(tg_id)}").fetchone()
+    if len(data) > 1:
         return 'yes'
     else:
         return 'no'

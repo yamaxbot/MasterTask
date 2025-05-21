@@ -17,13 +17,14 @@ import app.other_func as otf
 
 
 
+time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 router = Router()
 tasks_sl = {}
 message_id_user = {}
 
 
 
-class AddOneTask(StatesGroup):
+class AddTask(StatesGroup):
     title = State()
 
 class PasswordFriend(StatesGroup):
@@ -48,7 +49,7 @@ async def command_start_handler(message: Message, state: FSMContext):
 @router.message(Command('help'))
 async def command_help_handler(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer('🗒Инструкция\n\n⏰️Время:\nВся работа со временем в этом боте работает по Московскому времени(МСК). Поэтому выбирая время в напоминаниях, имейте ввиду, что время там установлено по МСК. Также новый день в боте начинается в 00:00 по МСК.\n\n✏Выполнение заданий:\nПервым делом вам нужно создать ваши ежедневне задания с помощью кнопки Создать задания. После создания заданий вы можете ежедневно отмечать задания, которые вы сделали, с помощью кнопки Выполнить задания. Также если вы хотите удалить какое либо задание, или добавить новое, вы можете это сделать, нажав на кнопку Редактировать задания\n\n📊Статистика:\nЧтобы узнать статистику, где будет показываться сколько заданий вы сделали всего, нужно нажать на кнопку Статистика.\nЕсли вы хотите узнать в какие дни, какие задания вы делали, нужно нажать на кнопку ежедневная статистика.\n\n🙋‍♂️Статистика друга:\nЧтобы узнать статистику друга или показать другу свою статистику, вам нужно нажать кнопку Статистика друга. Там вы сможете создать свой код, чтобы поделиться своей статистикой с другом. А также вы можете посмотреть статистику друга, если он предоставит вам код для просмотра его статистики.Если вы хотите, чтобы ваши друзья не могли посмотреть вашу статистику, просто удалите код, так они потеряют доступ к вашей статистике.\n\n🔔Напоминание: Чтобы включить напоминания, вам нужно нажать кнопку Напоминания. Но данная функция не бесплатная, она стоит 100 телеграмм звёзд. Она будет доступна всё время, но возможно в будущем что-то изменится. Сколько времени будет идти тестовый режим мы пока сказать не можем. Купив данную функцию, вы сможете ставить напоминания в удобное вам время.\nЧтобы поставить напоминания в удобное вам время после покупки, вам нужно нажать кнопку Напоминания, а затем нажать кнопку Редактировать время. После нажатия выберите нужное время и нажмите кнопку сохранить. Время устанавливается по МСК!')
+    await message.answer('🗒Инструкция\n\n⏰️Время:\nВся работа со временем в этом боте работает по Московскому времени(МСК). Поэтому выбирая время в напоминаниях, имейте ввиду, что время там установлено по МСК. Также новый день в боте начинается в 00:00 по МСК.\n\n📝Редактировать задания:\nЧтобы добавит новые задания или удалить уже имеющиеся, нажмите на кнопку Редактировать задания. После этого, нажмите на кнопку Добавит задания или на кнопку Удалить задания. Если вы нажали на кнопку добавить задания, то пишите новые задания по одному сообщению. Если вы нажали удалить сообщение, то нажмите цифры, под которым стоят ваши задания.\n\n✏Выполнение заданий:\nПосле создания заданий вы можете ежедневно отмечать задания, которые вы сделали, с помощью кнопки Выполнить задания. Чтобы отметить задание галочкой, нажмите на кнопку с цифрой, под номером которого расположено ваше задание. Если вы хотите обратно пометить задание крестиком, снова нажмите на эту цифру.\n\n📊Статистика:\nЧтобы узнать статистику, где будет показываться сколько заданий вы сделали всего, нужно нажать на кнопку Статистика.\nЕсли вы хотите узнать в какие дни, какие задания вы делали, нужно нажать на кнопку ежедневная статистика.\n\n🙋‍♂️Статистика друга:\nЧтобы узнать статистику друга или показать другу свою статистику, вам нужно нажать кнопку Статистика друга. Там вы сможете создать свой код, чтобы поделиться своей статистикой с другом. А также вы можете посмотреть статистику друга, если он предоставит вам код для просмотра его статистики.Если вы хотите, чтобы ваши друзья не могли посмотреть вашу статистику, просто удалите код, так они потеряют доступ к вашей статистике.\n\n🔔Напоминание: Чтобы включить напоминания, вам нужно нажать кнопку Напоминания. Но данная функция не бесплатная, она стоит 100 телеграмм звёзд. Купив данную функцию, вы сможете ставить напоминания в удобное вам время.\nЧтобы поставить напоминания в удобное вам время после покупки, вам нужно нажать кнопку Напоминания, а затем нажать кнопку Редактировать время. После нажатия выберите нужное время и нажмите кнопку сохранить. Время устанавливается по МСК!')
 
 
 @router.message(Command('statistics'))
@@ -61,13 +62,14 @@ async def statistics_admin_command_handler(message: Message, state: FSMContext):
 
 @router.message(Command('newsletter'))
 async def newsletter_admins_command_handler(message: Message, state: FSMContext):
+    await state.clear()
     if message.from_user.id in ADMINS:
         await state.set_state(NewsLetterState.mes)
         await message.answer('Отправьте сообщение которое хотите разослать')
 
 
 @router.message(NewsLetterState.mes)
-async def newsletter_admins_command_state_handler(message: Message, state: FSMContext, bot: Bot):
+async def newsletter_admins_command_state_handler(message: Message, state: FSMContext):
     clients = await sql.get_all_id_users_sql()
     await state.clear()
     total = 0
@@ -103,7 +105,7 @@ async def execute_tasks_handler(message: Message, state: FSMContext):
         else:
             await message.answer('У вас нет заданий')
     else:
-        await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их')
+        await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
 
 
 
@@ -129,7 +131,7 @@ async def daily_statics_handler(message: Message, state: FSMContext):
         
         await message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
     else:
-        await message.answer('‼️У вас не созданы задания, пожалуйста создайте их')
+        await message.answer('‼️У вас не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
 
 
 
@@ -170,18 +172,14 @@ async def general_statistics_handler(message: Message, state: FSMContext):
             mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
         await message.answer(mes)
     else:
-        await message.answer('‼️У вас нет заданий, пожалуйста создайте их')
+        await message.answer('‼️У вас нет заданий, пожалуйста создайте их, нажав на кнопку Редактировать задания')
 
 
 
 @router.message(F.text == '📝Редактировать задания')
 async def edit_tasks_handler(message: Message, state: FSMContext):
     await state.clear()
-    aval_tasks = await sql.availability_of_table(message.from_user.id)
-    if aval_tasks == 'yes':
-        await message.answer('🌏Также вы можете добавить какое либо задание, вместе с этим, за все прошедшие дни, будет выделено, что вы не выполняли это задание\n\n🗑Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании.\n\n', reply_markup=kb.edit_tasks_inline_kb)
-    else:
-        await message.answer('‼️У вас пока что нет заданий, пожалуйста создайте их')
+    await message.answer('🌏Вы можете добавить какое либо задание, нажав на кнопку Добавить задания.\n\n🗑Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании.\n\n', reply_markup=kb.edit_tasks_inline_kb)
 
 
 
@@ -208,7 +206,7 @@ async def reminder_main_handler(message: Message, state: FSMContext):
         prices = [LabeledPrice(label="XTR", amount=100)]
         donation_message = await message.answer_invoice(
             title="Напоминания",
-            description="⭐Данная функция 100 звёзд. Вы сможете ставить себе уведомления на определённое время, чтобы вы точно не забыли выполнить все задания. Данную функцию вы получаете на всё время, но возможно в будущем что-то поменяется.",
+            description="⭐Данная функция 100 звёзд. Вы сможете ставить себе уведомления на определённое время, чтобы вы точно не забыли выполнить все задания. Данную функцию вы получаете на всё время.",
             prices=prices,
             provider_token="",
             payload="donate_reminder",
@@ -226,24 +224,30 @@ async def reminder_main_handler(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith('number_'))
 async def change_state_task_handler(callback: CallbackQuery):
-    
-    await callback.answer()
-    number = str(callback.data).replace('number_', '')
-    await sql.change_state_task_sql(callback.from_user.id, number)
+    mes_date = str(callback.message.text).split()
+    today = str(datetime.datetime.now(time_moscow).date())
 
-    data = await sql.get_today_tasks_sql(callback.from_user.id)
-    data = data[0]
-    mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
-    columns = await sql.get_all_columns_sql(callback.from_user.id)
-    columns = [column.replace('_', ' ') for column in columns]
-    for d in range(1, len(data)):
-        if data[d] == '0':
-            mes += f'{d} {columns[d]} - ❌\n'
-        else: 
-            mes += f'{d} {columns[d]} - ✅\n'
+    if mes_date[2] == today:
+        await callback.answer()
+        number = str(callback.data).replace('number_', '')
+        await sql.change_state_task_sql(callback.from_user.id, number)
 
-    mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
-    await callback.message.edit_text(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
+        data = await sql.get_today_tasks_sql(callback.from_user.id)
+        data = data[0]
+        mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
+        columns = await sql.get_all_columns_sql(callback.from_user.id)
+        columns = [column.replace('_', ' ') for column in columns]
+        for d in range(1, len(data)):
+            if data[d] == '0':
+                mes += f'{d} {columns[d]} - ❌\n'
+            else: 
+                mes += f'{d} {columns[d]} - ✅\n'
+
+        mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
+        await callback.message.edit_text(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
+    else:
+
+        await callback.answer(f'Это задания прошлых дней, чтобы отметить задания сегодня, нажмите ещё раз кнопку Выполнить задания')
 
 
 
@@ -310,20 +314,21 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
 @router.callback_query(F.data == 'add_task')
 async def edit_task_add_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_sl
+    await state.clear()
     tasks_sl[callback.from_user.id] = []
     await callback.answer()
-    await callback.message.answer('‼️Напишите новые задание, которое хотите добавить по одному', reply_markup=kb.inline_cancel_kb)
-    await state.set_state(AddOneTask.title)
+    await callback.message.answer('‼️Напишите новые задание, которое хотите добавить. Пишите каждое задание по отдельному сообщению', reply_markup=kb.inline_cancel_kb)
+    await state.set_state(AddTask.title)
 
 
 
-@router.message(AddOneTask.title)
+@router.message(AddTask.title)
 async def edit_task_add_state_handler(message: Message, state: FSMContext):
     global tasks_sl
     columns = await sql.get_all_columns_sql(message.from_user.id)
     text = message.text.replace(' ', '_')
     if text not in columns and text not in tasks_sl[message.from_user.id]:
-        await message.answer('Напишите ещё одно задание или нажмите кнопку хватит', reply_markup=kb.stop_added_task_inlinekeyboard)
+        await message.answer('✍Напишите ещё одно задание или нажмите кнопку хватит', reply_markup=kb.stop_added_task_inlinekeyboard)
         new_tasks = list(tasks_sl[message.from_user.id])
         new_tasks.append(text)
         tasks_sl[message.from_user.id] = new_tasks
@@ -336,11 +341,11 @@ async def edit_task_add_state_handler(message: Message, state: FSMContext):
 async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
     global tasks_sl
     await callback.answer()
+    await state.clear()
 
-    if len(tasks_sl[callback.from_user.id]) != 0:
+    if callback.from_user.id in tasks_sl.keys() and len(tasks_sl[callback.from_user.id]) != 0:
         await sql.add_columns_sql(callback.from_user.id, tasks_sl[callback.from_user.id])
         await callback.message.answer(f'✅Вы добавили задания')
-        await state.clear()
         del tasks_sl[callback.from_user.id]
 
 
@@ -348,19 +353,23 @@ async def stop_add_task_handler(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'delete_task')
 async def edit_task_delete_handler(callback: CallbackQuery):
     await callback.answer()
-    data = await sql.get_today_tasks_sql(callback.from_user.id)
-    data = data[0]
-    mes = f'📒Все ваши задания\n\n'
-    columns = await sql.get_all_columns_sql(callback.from_user.id)
-    columns = [column.replace('_', ' ') for column in columns]
-    for d in range(1, len(data)):
-        if data[d] == '0':
-            mes += f'{d} {columns[d]}\n'
-        else: 
-            mes += f'{d} {columns[d]}\n'
-    
-    mes += '\n‼️Чтобы удалить задание, нажмите на кнопку снизу с номером'
-    await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
+    aval_tasks = await sql.availability_of_table(callback.from_user.id)
+    if aval_tasks == 'yes':
+        data = await sql.get_today_tasks_sql(callback.from_user.id)
+        data = data[0]
+        mes = f'📒Все ваши задания\n\n'
+        columns = await sql.get_all_columns_sql(callback.from_user.id)
+        columns = [column.replace('_', ' ') for column in columns]
+        for d in range(1, len(data)):
+            if data[d] == '0':
+                mes += f'{d} {columns[d]}\n'
+            else: 
+                mes += f'{d} {columns[d]}\n'
+        
+        mes += '\n‼️Чтобы удалить задание, нажмите на кнопку снизу с номером'
+        await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
+    else:
+        await callback.message.answer('‼️У вас итак нет заданий, чтобы создать их нажите на кнопку Добавить задания')
 
 
 
@@ -374,19 +383,23 @@ async def edit_task_delete_state_handler(callback: CallbackQuery):
     await callback.message.delete()
     await callback.message.answer(f"✅Задание {str(columns[number]).replace('_', ' ')} удалено")
     
-    data = await sql.get_today_tasks_sql(callback.from_user.id)
-    data = data[0]
-    mes = f'📒Все ваши задания\n\n'
-    columns = await sql.get_all_columns_sql(callback.from_user.id)
-    columns = [column.replace('_', ' ') for column in columns]
-    for d in range(1, len(data)):
-        if data[d] == '0':
-            mes += f'{d} {columns[d]}\n'
-        else: 
-            mes += f'{d} {columns[d]}\n'
-    
-    mes += '\n‼️Чтобы удалить задание, нажмите на кнопку снизу с номером'
-    await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
+    aval_tasks = await sql.availability_of_table(callback.from_user.id)
+    if aval_tasks == 'yes':
+        data = await sql.get_today_tasks_sql(callback.from_user.id)
+        data = data[0]
+        mes = f'📒Все ваши задания\n\n'
+        columns = await sql.get_all_columns_sql(callback.from_user.id)
+        columns = [column.replace('_', ' ') for column in columns]
+        for d in range(1, len(data)):
+            if data[d] == '0':
+                mes += f'{d} {columns[d]}\n'
+            else: 
+                mes += f'{d} {columns[d]}\n'
+        
+        mes += '\n‼️Чтобы удалить задание, нажмите на кнопку снизу с номером'
+        await callback.message.answer(mes, reply_markup=await kb.delete_one_task_inline(len(data)-1))
+    else:
+        await callback.message.answer('‼️У вас больше нет заданий, если хотите добавить новые, нажмите кнопку Добавить задания')
 
 
 
@@ -601,38 +614,6 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
 
 
 
-@router.message(F.text == '🔔Напоминание')
-async def reminder_main_handler(message: Message, state: FSMContext):
-    await state.clear()
-    donate_id = await sql.get_reminder_donates_id_sql()
-    
-    if str(message.from_user.id) in donate_id:
-        data = await sql.get_times_user_sql(message.from_user.id)
-        if data[2] == '0':
-            await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
-        else:
-            times = str(data[2]).replace('/', '\n')
-            await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
-    else:
-        prices = [LabeledPrice(label="XTR", amount=100)]
-        donation_message = await message.answer_invoice(
-            title="Напоминания",
-            description="⭐Данная функция 100 звёзд. Вы сможете ставить себе уведомления на определённое время, чтобы вы точно не забыли выполнить все задания",
-            prices=prices,
-            provider_token="",
-            payload="donate_reminder",
-            currency="XTR",
-            reply_markup=await kb.donate_reminder_kb()
-        )
-        if message.from_user.id in message_id_user.keys():
-            ls = list(message_id_user[message.from_user.id])
-            ls.append(donation_message.message_id)
-            message_id_user[message.from_user.id] = ls
-        else:
-            message_id_user[message.from_user.id] = [donation_message.message_id]
-
-
-
 @router.pre_checkout_query()
 async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
     await pre_checkout_query.answer(ok=True)
@@ -640,7 +621,8 @@ async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
 
 
 @router.message(F.successful_payment.invoice_payload == 'donate_reminder')
-async def procces_donate_reminer_handler(message: Message, bot: Bot):
+async def procces_donate_reminer_handler(message: Message, bot: Bot, state: FSMContext):
+    await state.clear()
     await sql.add_reminder_donater_sql(message.from_user.id, message.successful_payment.telegram_payment_charge_id)
     await message.answer('✅Теперь вы можете пользоваться напоминалками.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
     ls = message_id_user[message.from_user.id]
@@ -651,7 +633,8 @@ async def procces_donate_reminer_handler(message: Message, bot: Bot):
 
 
 @router.message(Command('refund'))
-async def command_refund_handler(message: Message, bot: Bot, command: CommandObject):
+async def command_refund_handler(message: Message, bot: Bot, command: CommandObject, state: FSMContext):
+    await state.clear()
     transaction_id = command.args
     data = await sql.get_id_by_transaction_id_sql(transaction_id)
     user_id = data[0]
