@@ -10,7 +10,6 @@ async def start_sql():
 
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT, registration_date TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
-    cur.execute("CREATE TABLE IF NOT EXISTS reminder_donate(id TEXT, date TEXT, donate_key TEXT)")
 
     db.commit()
 
@@ -155,30 +154,6 @@ async def get_times_all_users_sql():
 
 async def get_times_user_sql(tg_id):
     return cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, )).fetchone()
-
-
-async def get_reminder_donates_id_sql():
-    data = cur.execute("SELECT * FROM reminder_donate").fetchall()
-    id_users = []
-    for d in data:
-        id_users.append(d[0])
-    return id_users
-
-
-async def add_reminder_donater_sql(tg_id, key):
-    today = str(datetime.datetime.now(time_moscow).date())
-    cur.execute("INSERT INTO reminder_donate VALUES(?, ?, ?)", (tg_id, today, key,))
-    db.commit()
-
-
-async def get_transaction_id_sql(tg_id):
-    data = cur.execute("SELECT * FROM reminder_donate WHERE id = ?", (tg_id, )).fetchone()
-    return data
-
-
-async def get_id_by_transaction_id_sql(transaction_id):
-    data = cur.execute("SELECT * FROM reminder_donate WHERE donate_key = ?", (transaction_id, )).fetchone()
-    return data
 
 
 async def statistics_command_sql():

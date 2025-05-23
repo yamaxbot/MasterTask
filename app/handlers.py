@@ -20,7 +20,6 @@ import app.other_func as otf
 time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 router = Router()
 tasks_sl = {}
-message_id_user = {}
 
 
 
@@ -193,33 +192,13 @@ async def statistics_friend_handler(message: Message, state:FSMContext):
 @router.message(F.text == '🔔Напоминание')
 async def reminder_main_handler(message: Message, state: FSMContext):
     await state.clear()
-    donate_id = await sql.get_reminder_donates_id_sql()
-    
-    if str(message.from_user.id) in donate_id:
-        data = await sql.get_times_user_sql(message.from_user.id)
-        if data[2] == '0':
-            await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
-        else:
-            times = str(data[2]).replace('/', '\n')
-            await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
+    data = await sql.get_times_user_sql(message.from_user.id)
+    if data[2] == '0':
+        await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
     else:
-        prices = [LabeledPrice(label="XTR", amount=100)]
-        donation_message = await message.answer_invoice(
-            title="Напоминания",
-            description="⭐Данная функция 100 звёзд. Вы сможете ставить себе уведомления на определённое время, чтобы вы точно не забыли выполнить все задания. Данную функцию вы получаете на всё время.",
-            prices=prices,
-            provider_token="",
-            payload="donate_reminder",
-            currency="XTR",
-            reply_markup=await kb.donate_reminder_kb()
-        )
-        if message.from_user.id in message_id_user.keys():
-            ls = list(message_id_user[message.from_user.id])
-            ls.append(donation_message.message_id)
-            message_id_user[message.from_user.id] = ls
-        else:
-            message_id_user[message.from_user.id] = [donation_message.message_id]
-
+        times = str(data[2]).replace('/', '\n')
+        await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
+        
 
 
 @router.callback_query(F.data.startswith('number_'))
@@ -611,24 +590,6 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
         main_mes += f'{current_n+1}/{math.ceil(len(daily_tasks)/7)}'
         
         await callback.message.edit_text(main_mes, reply_markup=kb.inline_arroy_daily_tasks_friend_kb)
-
-
-
-@router.pre_checkout_query()
-async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
-    await pre_checkout_query.answer(ok=True)
-    
-
-
-@router.message(F.successful_payment.invoice_payload == 'donate_reminder')
-async def procces_donate_reminer_handler(message: Message, bot: Bot, state: FSMContext):
-    await state.clear()
-    await sql.add_reminder_donater_sql(message.from_user.id, message.successful_payment.telegram_payment_charge_id)
-    await message.answer('✅Теперь вы можете пользоваться напоминалками.\n❓Если есть вопросы, пишите сюда: @TaskMasterSupportBot')
-    ls = message_id_user[message.from_user.id]
-    for mes_id in ls:
-        await bot.delete_message(message.from_user.id, mes_id)
-    del message_id_user[message.from_user.id]
 
 
 
