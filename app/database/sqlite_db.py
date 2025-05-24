@@ -10,7 +10,7 @@ async def start_sql():
 
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT, registration_date TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
-
+    cur.execute("CREATE TABLE IF NOT EXISTS subscribe_channel(username TEXT)")
     db.commit()
 
 
