@@ -86,122 +86,241 @@ async def newsletter_admins_command_state_handler(message: Message, state: FSMCo
 
 
 @router.message(F.text == '✏️Выполнить задания')
-async def execute_tasks_handler(message: Message, state: FSMContext):
+async def execute_tasks_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
-    aval_tasks = await sql.availability_of_table(message.from_user.id)
-    if aval_tasks == 'yes':
-        data = await sql.get_today_tasks_sql(message.from_user.id)
-        data = data[0]
-        if len(data) > 1:
-            mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
-            columns = await sql.get_all_columns_sql(message.from_user.id)
-            columns = [column.replace('_', ' ') for column in columns]
-            for d in range(1, len(data)):
-                if data[d] == '0':
-                    mes += f'{d} {columns[d]} - ❌\n'
-                else:
-                    mes += f'{d} {columns[d]} - ✅\n'
-            
-            mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
-            await message.answer(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
+
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
+
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        aval_tasks = await sql.availability_of_table(message.from_user.id)
+        if aval_tasks == 'yes':
+            data = await sql.get_today_tasks_sql(message.from_user.id)
+            data = data[0]
+            if len(data) > 1:
+                mes = f'🗓Сегодняшняя дата:\n{data[0]}\n\n'
+                columns = await sql.get_all_columns_sql(message.from_user.id)
+                columns = [column.replace('_', ' ') for column in columns]
+                for d in range(1, len(data)):
+                    if data[d] == '0':
+                        mes += f'{d} {columns[d]} - ❌\n'
+                    else:
+                        mes += f'{d} {columns[d]} - ✅\n'
+                
+                mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
+                await message.answer(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
+            else:
+                await message.answer('У вас нет заданий')
         else:
-            await message.answer('У вас нет заданий')
+            await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
     else:
-        await message.answer('‼️У вас пока не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
 
 
 
 @router.message(F.text == '📈Ежедневная статистика')
-async def daily_statics_handler(message: Message, state: FSMContext):
+async def daily_statics_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
-    aval_tasks = await sql.availability_of_table(message.from_user.id)
-    if aval_tasks == 'yes':
-        daily_tasks = await sql.get_all_daily_tasks_sql(message.from_user.id)
-        main_mes = '📈Ежедневная статистика\n\n'
-        for data in daily_tasks[-1: -8: -1][::-1]:
-            mes = f'🗓Дата:\n{data[0]}\n'
-            columns = await sql.get_all_columns_sql(message.from_user.id)
-            columns = [column.replace('_', ' ') for column in columns]
-            for d in range(1, len(data)):
-                if data[d] == '0':
-                    mes += f'{d} {columns[d]} - ❌\n'
-                else: 
-                    mes += f'{d} {columns[d]} - ✅\n'
 
-            main_mes += mes + '\n\n'
-        main_mes += f'{math.ceil(len(daily_tasks)/7)}/{math.ceil(len(daily_tasks)/7)}'
-        
-        await message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
+
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        aval_tasks = await sql.availability_of_table(message.from_user.id)
+        if aval_tasks == 'yes':
+            daily_tasks = await sql.get_all_daily_tasks_sql(message.from_user.id)
+            main_mes = '📈Ежедневная статистика\n\n'
+            for data in daily_tasks[-1: -8: -1][::-1]:
+                mes = f'🗓Дата:\n{data[0]}\n'
+                columns = await sql.get_all_columns_sql(message.from_user.id)
+                columns = [column.replace('_', ' ') for column in columns]
+                for d in range(1, len(data)):
+                    if data[d] == '0':
+                        mes += f'{d} {columns[d]} - ❌\n'
+                    else: 
+                        mes += f'{d} {columns[d]} - ✅\n'
+
+                main_mes += mes + '\n\n'
+            main_mes += f'{math.ceil(len(daily_tasks)/7)}/{math.ceil(len(daily_tasks)/7)}'
+            
+            await message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
+        else:
+            await message.answer('‼️У вас не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
     else:
-        await message.answer('‼️У вас не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
 
 
 
 @router.message(F.text == '📊Статистика')
-async def general_statistics_handler(message: Message, state: FSMContext):
+async def general_statistics_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
-    time_moscow = datetime.timezone(datetime.timedelta(hours=3))
-    today = str(datetime.datetime.now(time_moscow).date())
-    aval_tasks = await sql.availability_of_table(message.from_user.id)
-    if aval_tasks == 'yes':
-        data = await sql.get_all_daily_tasks_sql(message.from_user.id)
-        columns = await sql.get_all_columns_sql(message.from_user.id)
-        mes = '📊Ваша статистика за всё время\n\n'
 
-        all_done_tasks = 0
-        for i in range(len(data)):
-            for j in range(len(data[i])):
-                if j != 0:
-                    all_done_tasks += int(data[i][j])
-        mes += f'🌏Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
 
-        for j in range(len(data[0])):
-            if j == 0:
-                continue
-            total_task = 0
-            shock_mode = 0
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        time_moscow = datetime.timezone(datetime.timedelta(hours=3))
+        today = str(datetime.datetime.now(time_moscow).date())
+        aval_tasks = await sql.availability_of_table(message.from_user.id)
+        if aval_tasks == 'yes':
+            data = await sql.get_all_daily_tasks_sql(message.from_user.id)
+            columns = await sql.get_all_columns_sql(message.from_user.id)
+            mes = '📊Ваша статистика за всё время\n\n'
+
+            all_done_tasks = 0
             for i in range(len(data)):
-                total_task += int(data[i][j])
+                for j in range(len(data[i])):
+                    if j != 0:
+                        all_done_tasks += int(data[i][j])
+            mes += f'🌏Количество сделанных заданий за всё время: {all_done_tasks}\n\n'
 
-                if data[i][0] == today:
-                    shock_mode += 0
-                    if data[i][j] == '1':
+            for j in range(len(data[0])):
+                if j == 0:
+                    continue
+                total_task = 0
+                shock_mode = 0
+                for i in range(len(data)):
+                    total_task += int(data[i][j])
+
+                    if data[i][0] == today:
+                        shock_mode += 0
+                        if data[i][j] == '1':
+                            shock_mode += 1
+                    elif data[i][j] == '0':
+                        shock_mode = 0
+                    else:
                         shock_mode += 1
-                elif data[i][j] == '0':
-                    shock_mode = 0
-                else:
-                    shock_mode += 1
-            mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
-        await message.answer(mes)
+                mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
+            await message.answer(mes)
+        else:
+            await message.answer('‼️У вас нет заданий, пожалуйста создайте их, нажав на кнопку Редактировать задания')
     else:
-        await message.answer('‼️У вас нет заданий, пожалуйста создайте их, нажав на кнопку Редактировать задания')
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
 
 
 
 @router.message(F.text == '📝Редактировать задания')
-async def edit_tasks_handler(message: Message, state: FSMContext):
+async def edit_tasks_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
-    await message.answer('🌏Вы можете добавить какое либо задание, нажав на кнопку Добавить задания.\n\n🗑Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании.\n\n', reply_markup=kb.edit_tasks_inline_kb)
+
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
+
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        await message.answer('🌏Вы можете добавить какое либо задание, нажав на кнопку Добавить задания.\n\n🗑Вы можете удалить какое либо задание, при этом удалятся все данные и статистика об этом задании.\n\n', reply_markup=kb.edit_tasks_inline_kb)
+    else:
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
 
 
 
 @router.message(F.text == '🙋‍♂️Статистика друга')
-async def statistics_friend_handler(message: Message, state:FSMContext):
+async def statistics_friend_handler(message: Message, state:FSMContext, bot: Bot):
     await state.clear()
-    await message.answer('🔑Здесь вы можете создать свой специальный код, чтобы ваш друг смог посмотреть вашу статистику.\n\n🔐Также вы можете посмотреть статистику своего друга, если у вас есть специальный код, который должен предоставить ваш друг', reply_markup=kb.inline_friend_statistics_kb)
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
+
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        await message.answer('🔑Здесь вы можете создать свой специальный код, чтобы ваш друг смог посмотреть вашу статистику.\n\n🔐Также вы можете посмотреть статистику своего друга, если у вас есть специальный код, который должен предоставить ваш друг', reply_markup=kb.inline_friend_statistics_kb)
+    else:
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
 
 
 
 @router.message(F.text == '🔔Напоминание')
-async def reminder_main_handler(message: Message, state: FSMContext):
+async def reminder_main_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
-    data = await sql.get_times_user_sql(message.from_user.id)
-    if data[2] == '0':
-        await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
+
+    ls_channel = []
+    sub_channels = await sql.get_all_username_channels_sql()
+
+    for c in sub_channels:
+        try:
+            chat = await bot.get_chat(c)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            if str(member.status) == 'ChatMemberStatus.LEFT':
+                ls_channel.append(c)
+        except:
+            await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
+
+    if len(ls_channel) == 0:
+        data = await sql.get_times_user_sql(message.from_user.id)
+        if data[2] == '0':
+            await message.answer('⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒У вас пока нет напоминаний', reply_markup=kb.inline_add_delete_reminder_kb)
+        else:
+            times = str(data[2]).replace('/', '\n')
+            await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
     else:
-        times = str(data[2]).replace('/', '\n')
-        await message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
-    
+        sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
+        for i in range(len(ls_channel)):
+            sub_mes += f'{i+1} {ls_channel[i]}\n'
+        sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
+        await message.answer(sub_mes)
+
 
 
 @router.callback_query(F.data.startswith('number_'))
@@ -228,7 +347,6 @@ async def change_state_task_handler(callback: CallbackQuery):
         mes += '\n‼️Чтобы задание выделилось галочкой или наоборот крестиком, нажмите на кнопку снизу с таким номером, под которым указано задание'
         await callback.message.edit_text(mes, reply_markup=await kb.inline_number_task_kb(len(data)-1))
     else:
-
         await callback.answer(f'Это задания прошлых дней, чтобы отметить задания сегодня, нажмите ещё раз кнопку Выполнить задания')
 
 
@@ -669,5 +787,40 @@ async def add_time_stop_state_handler(callback: CallbackQuery):
 
 
 @router.message(Command('add_channel'))
-async def add_subscribe_channel_handler(message: Message):
-    channel_username = list(str(message.text).split())[1]
+async def add_subscribe_channel_handler(message: Message, bot: Bot):
+    if message.from_user.id in ADMINS:
+        channel_username = list(str(message.text).split())[1]
+        chat = await bot.get_chat(channel_username)
+        try:
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            await sql.add_username_channel_sql(channel_username)
+            await message.answer('Канал добавлен')
+        except:
+            await message.answer('Бота нет в канале или такого канала не существует')
+
+
+
+@router.message(Command('get_channels'))
+async def get_cubscribe_channels_handler(message: Message):
+    if message.from_user.id in ADMINS:
+        sub_channels = await sql.get_all_username_channels_sql()
+        if len(sub_channels) != 0:
+            mes = 'Каналы с объязательной подпиской:\n'
+            for channel in sub_channels:
+                mes += f'{channel}\n'
+            await message.answer(mes)
+        else:
+            await message.answer('Каналов с объязательной подпиской пока нет')
+
+
+
+@router.message(Command('delete_channel'))
+async def delete_channel_subscribe_handler(message: Message):
+    if message.from_user.id in ADMINS:
+        sub_channels = await sql.get_all_username_channels_sql()
+        channel_username = list(str(message.text).split())[1]
+        if channel_username in sub_channels:
+            await sql.delete_channel_subscribe_sql(channel_username)
+            await message.answer('Этот канал успешно удалён')
+        else:
+            await message.answer('Такого канала в списке нет')

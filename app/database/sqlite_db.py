@@ -161,3 +161,21 @@ async def statistics_command_sql():
     all_users = cur.execute("SELECT * FROM clients").fetchall()
     new_users = cur.execute("SELECT * FROM clients WHERE registration_date = ?", (today, )).fetchall()
     return len(all_users), len(new_users)
+
+
+async def add_username_channel_sql(username):
+    cur.execute("INSERT INTO subscribe_channel VALUES(?)", (username, ))
+    db.commit()
+
+
+async def get_all_username_channels_sql():
+    data = cur.execute("SELECT * FROM subscribe_channel").fetchall()
+    ls = []
+    for c in data:
+        ls.append(c[0])
+    return ls
+
+
+async def delete_channel_subscribe_sql(username):
+    cur.execute("DELETE FROM subscribe_channel WHERE username = ?", (username, ))
+    db.commit()
