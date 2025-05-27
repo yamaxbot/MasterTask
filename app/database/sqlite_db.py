@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import datetime
+
 time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 
 async def start_sql():
@@ -11,6 +12,7 @@ async def start_sql():
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, avail_table TEXT, reminder TEXT, registration_date TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS subscribe_channel(username TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS main_date_table(date TEXT)")
     db.commit()
 
 
@@ -19,6 +21,16 @@ async def connection_sql():
 
     db = sql.connect('data.db')
     cur = sql.Cursor(db)
+
+
+async def get_date_sql():
+    return cur.execute("SELECT * FROM main_date_table").fetchone()
+
+
+async def new_main_date_sql(old_date):
+    today = str(datetime.datetime.now(time_moscow).date())
+    cur.execute("UPDATE main_date_table SET date = ? WHERE date = ?", (today, old_date, ))
+    db.commit()
 
 
 async def add_client_sql(tg_id):

@@ -1,6 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from app.handlers import router
+from app.admin_handlers import router_admin
 import datetime
 from config import TOKEN
 import app.database.sqlite_db as sql
@@ -12,16 +13,19 @@ async def main():
     asyncio.create_task(new_date(bot))
     await sql.start_sql()
     dp.include_router(router=router)
+    dp.include_router(router=router_admin)
     await dp.start_polling(bot)
 
 
 async def new_date(bot):
     await sql.connection_sql()
-    old_date = '2025-05-25'
+    old_date = await sql.get_date_sql()
+    old_date = list(old_date)[0]
     while True:
         time_moscow = datetime.timezone(datetime.timedelta(hours=3))
         today = str(datetime.datetime.now(time_moscow).date())
         if old_date != today:
+            await sql.new_main_date_sql(old_date)
             old_date = today
             await sql.new_date_sql()
 

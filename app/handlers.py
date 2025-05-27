@@ -16,11 +16,9 @@ import app.keyboards as kb
 import app.other_func as otf
 
 
-
 time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 router = Router()
 tasks_sl = {}
-
 
 
 class AddTask(StatesGroup):
@@ -28,10 +26,6 @@ class AddTask(StatesGroup):
 
 class PasswordFriend(StatesGroup):
     password = State()
-
-class NewsLetterState(StatesGroup):
-    mes = State()
-
 
 
 @router.message(Command('start'))
@@ -49,39 +43,6 @@ async def command_start_handler(message: Message, state: FSMContext):
 async def command_help_handler(message: Message, state: FSMContext):
     await state.clear()
     await message.answer('🗒Инструкция\n\n⏰️Время:\nВся работа со временем в этом боте работает по Московскому времени(МСК). Поэтому выбирая время в напоминаниях, имейте ввиду, что время там установлено по МСК. Также новый день в боте начинается в 00:00 по МСК.\n\n📝Редактировать задания:\nЧтобы добавить новые задания или удалить уже имеющиеся, нажмите на кнопку Редактировать задания. После этого, нажмите на кнопку Добавить задания или на кнопку Удалить задания. Если вы нажали на кнопку добавить задания, то пишите новые задания по одному сообщению. Если вы нажали удалить сообщение, то нажмите цифры, под которым стоят ваши задания.\n\n✏Выполнение заданий:\nПосле создания заданий вы можете ежедневно отмечать задания, которые вы сделали, с помощью кнопки Выполнить задания. Чтобы отметить задание галочкой, нажмите на кнопку с цифрой, под номером которого расположено ваше задание. Если вы хотите обратно пометить задание крестиком, снова нажмите на эту цифру.\n\n📊Статистика:\nЧтобы узнать статистику, где будет показываться сколько заданий вы сделали всего, нужно нажать на кнопку Статистика.\nЕсли вы хотите узнать в какие дни, какие задания вы делали, нужно нажать на кнопку ежедневная статистика.\n\n🙋‍♂️Статистика друга:\nЧтобы узнать статистику друга или показать другу свою статистику, вам нужно нажать кнопку Статистика друга. Там вы сможете создать свой код, чтобы поделиться своей статистикой с другом. А также вы можете посмотреть статистику друга, если он предоставит вам код для просмотра его статистики.Если вы хотите, чтобы ваши друзья не могли посмотреть вашу статистику, просто удалите код, так они потеряют доступ к вашей статистике.\n\n🔔Напоминание:\nЧтобы поставить напоминания в удобное вам время, вам нужно нажать кнопку Напоминания, а затем нажать кнопку Редактировать время. После нажатия выберите нужное время и нажмите кнопку сохранить. Время устанавливается по МСК!')
-
-
-
-@router.message(Command('statistics'))
-async def statistics_admin_command_handler(message: Message, state: FSMContext):
-    await state.clear()
-    if message.from_user.id in ADMINS:
-        all_users, new_users = await sql.statistics_command_sql()
-        await message.answer(f'📈Статистика:\n\n👨‍💻Всего пользователей: {all_users}\n\n⏰️ Новых за сегодня: {new_users}')
-
-
-
-@router.message(Command('newsletter'))
-async def newsletter_admins_command_handler(message: Message, state: FSMContext):
-    await state.clear()
-    if message.from_user.id in ADMINS:
-        await state.set_state(NewsLetterState.mes)
-        await message.answer('Отправьте сообщение которое хотите разослать')
-
-
-
-@router.message(NewsLetterState.mes)
-async def newsletter_admins_command_state_handler(message: Message, state: FSMContext):
-    clients = await sql.get_all_id_users_sql()
-    await state.clear()
-    total = 0
-    for client in clients:
-        try:
-            await message.send_copy(chat_id=client)
-            total = total + 1
-        except:
-            continue
-    await message.answer(text=f'Сообщение разослано, {total} людей')
 
 
 
@@ -714,22 +675,6 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
 
 
 
-@router.message(Command('refund'))
-async def command_refund_handler(message: Message, bot: Bot, command: CommandObject, state: FSMContext):
-    await state.clear()
-    transaction_id = command.args
-    data = await sql.get_id_by_transaction_id_sql(transaction_id)
-    user_id = data[0]
-    try:
-        await bot.refund_star_payment(
-            user_id=user_id,
-            telegram_payment_charge_id=transaction_id
-        )
-    except Exception as e:
-        print(e)
-
-
-
 @router.callback_query(F.data == 'edit_time')
 async def edit_time_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -783,44 +728,3 @@ async def add_time_stop_state_handler(callback: CallbackQuery):
         await callback.message.answer(f'⏰️ Вы можете добавить время, в которое вам нужно отправить напоминание.\n\n🗑Также вы можете удалить все напоминания.\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
             
         await callback.message.answer('✅Сохранено!')
-
-
-
-@router.message(Command('add_channel'))
-async def add_subscribe_channel_handler(message: Message, bot: Bot):
-    if message.from_user.id in ADMINS:
-        channel_username = list(str(message.text).split())[1]
-        chat = await bot.get_chat(channel_username)
-        try:
-            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
-            await sql.add_username_channel_sql(channel_username)
-            await message.answer('Канал добавлен')
-        except:
-            await message.answer('Бота нет в канале или такого канала не существует')
-
-
-
-@router.message(Command('get_channels'))
-async def get_cubscribe_channels_handler(message: Message):
-    if message.from_user.id in ADMINS:
-        sub_channels = await sql.get_all_username_channels_sql()
-        if len(sub_channels) != 0:
-            mes = 'Каналы с объязательной подпиской:\n'
-            for channel in sub_channels:
-                mes += f'{channel}\n'
-            await message.answer(mes)
-        else:
-            await message.answer('Каналов с объязательной подпиской пока нет')
-
-
-
-@router.message(Command('delete_channel'))
-async def delete_channel_subscribe_handler(message: Message):
-    if message.from_user.id in ADMINS:
-        sub_channels = await sql.get_all_username_channels_sql()
-        channel_username = list(str(message.text).split())[1]
-        if channel_username in sub_channels:
-            await sql.delete_channel_subscribe_sql(channel_username)
-            await message.answer('Этот канал успешно удалён')
-        else:
-            await message.answer('Такого канала в списке нет')

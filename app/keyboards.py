@@ -61,7 +61,6 @@ inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
-
 inline_arroy_daily_tasks_friend_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='⬅', callback_data='arrow_left_friend'), InlineKeyboardButton(text='➡', callback_data='arrow_right_friend')]
 ])
