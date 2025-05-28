@@ -40,7 +40,7 @@ async def new_date(bot):
             task_user = list(task_user[0])
             del task_user[0]
 
-            if user[2] != 0 and '0' in task_user:
+            if user[2] != '0' and '0' in task_user:
                 times = str(user[2]).split('/')
                 if time in times:
                     await bot.send_message(text='У вас есть невыполненные задания', chat_id=user[0])
