@@ -1,7 +1,9 @@
 # Используем официальный образ Python
 FROM python:3.10
 
-WORKDIR /app
+COPY . /main_work
+
+WORKDIR /main_work
 
 COPY requirements.txt reaquirements.txt
 
