@@ -1,14 +1,13 @@
 # Используем официальный образ Python
 FROM python:3.10
 
-COPY . /main_work
+# Устанавливаем рабочую директорию
+WORKDIR /app
 
-WORKDIR /main_work
-
-COPY requirements.txt reaquirements.txt
+COPY requirements.txt requirements.txt
 
 # Устанавливаем зависимости
-RUN pip install -r reaquirements.txt
+RUN pip install -r requirements.txt
 
 # Запускаем бота
 CMD ["python", "main.py"]

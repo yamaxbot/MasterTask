@@ -36,6 +36,10 @@ async def command_start_handler(message: Message, state: FSMContext):
     if str(message.from_user.id) not in data:
         await sql.add_client_sql(message.from_user.id)
         await sql.create_new_table_sql(message.from_user.id)
+    else:
+        user = await sql.get_user_sql(message.from_user.id)
+        if message.from_user.first_name != user[1]:
+            await sql.update_firstname_user_sql(message.from_user.id, message.from_user.first_name)
 
 
 
@@ -284,6 +288,12 @@ async def reminder_main_handler(message: Message, state: FSMContext, bot: Bot):
 
 
 
+@router.message(F.text == '👤Профиль')
+async def profile_user_handler(message: Message):
+    await message.answer('Данная функция пока не доступна.')
+
+
+    
 @router.callback_query(F.data.startswith('number_'))
 async def change_state_task_handler(callback: CallbackQuery):
     mes_date = str(callback.message.text).split()
@@ -536,7 +546,7 @@ async def friend_code_state_password_handler(message: Message, state: FSMContext
 
 
 
-@router.callback_query(F.data == 'general_statistics')
+@router.callback_query(F.data == 'general_statistics_friend')
 async def general_statistics_friend_handler(callback: CallbackQuery):
     await callback.answer()
     time_moscow = datetime.timezone(datetime.timedelta(hours=3))
@@ -581,7 +591,7 @@ async def general_statistics_friend_handler(callback: CallbackQuery):
 
 
 
-@router.callback_query(F.data == 'default_statistics')
+@router.callback_query(F.data == 'default_statistics_friend')
 async def daily_statics_friend_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
