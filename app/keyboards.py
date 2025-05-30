@@ -16,6 +16,11 @@ stop_added_task_inlinekeyboard = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
+user_statistics_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Статистика', callback_data='general_statistics'), InlineKeyboardButton(text='Ежедневник', callback_data='default_statistics')]
+])
+
+
 async def inline_number_task_kb(quant):
     keyboard = InlineKeyboardBuilder()
     for i in range(1, quant+1):

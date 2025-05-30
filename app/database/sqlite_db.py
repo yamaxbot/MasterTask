@@ -33,12 +33,22 @@ async def new_main_date_sql(old_date):
     db.commit()
 
 
-async def add_client_sql(tg_id, nickname):
+async def add_client_sql(tg_id):
     today = str(datetime.datetime.now(time_moscow).date())
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, nickname, 0, today, ))
+    all_clients = cur.execute("SELECT * FROM clients").fetchall()
+    total_clients = len(all_clients)
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, f'user_{total_clients+1}', 0, today, ))
     db.commit()
 
 
+async def get_all_clients_sql():
+    return cur.execute("SELECT * FROM clients").fetchall()
+
+
+async def get_client_sql(tg_id):
+    return cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, )).fetchone()
+
+    
 async def get_all_id_users_sql():
     data = cur.execute("SELECT id FROM clients").fetchall()
     all_id = []

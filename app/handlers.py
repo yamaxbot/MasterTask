@@ -36,10 +36,6 @@ async def command_start_handler(message: Message, state: FSMContext):
     if str(message.from_user.id) not in data:
         await sql.add_client_sql(message.from_user.id)
         await sql.create_new_table_sql(message.from_user.id)
-    else:
-        user = await sql.get_user_sql(message.from_user.id)
-        if message.from_user.first_name != user[1]:
-            await sql.update_firstname_user_sql(message.from_user.id, message.from_user.first_name)
 
 
 
@@ -96,8 +92,15 @@ async def execute_tasks_handler(message: Message, state: FSMContext, bot: Bot):
 
 
 
-@router.message(F.text == '📈Ежедневная статистика')
-async def daily_statics_handler(message: Message, state: FSMContext, bot: Bot):
+@router.message(F.text == '📊Статистика')
+async def main_keyboard_statistics_handler(message: Message, state: FSMContext):
+    await state.clear()
+
+    await message.answer('Вы можете посмотреть статистику или ежедневник', reply_markup=kb.user_statistics_inline_keyboard)
+
+
+@router.callback_query(F.data == 'default_statistics')
+async def daily_statics_handler(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await state.clear()
 
     ls_channel = []
@@ -106,20 +109,20 @@ async def daily_statics_handler(message: Message, state: FSMContext, bot: Bot):
     for c in sub_channels:
         try:
             chat = await bot.get_chat(c)
-            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=callback.from_user.id)
             if str(member.status) == 'ChatMemberStatus.LEFT':
                 ls_channel.append(c)
         except:
             await bot.send_message(text=f'С ботом в канале {c} произошла ошибка', chat_id=ADMINS[0])
 
     if len(ls_channel) == 0:
-        aval_tasks = await sql.availability_of_table(message.from_user.id)
+        aval_tasks = await sql.availability_of_table(callback.from_user.id)
         if aval_tasks == 'yes':
-            daily_tasks = await sql.get_all_daily_tasks_sql(message.from_user.id)
-            main_mes = '📈Ежедневная статистика\n\n'
+            daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
+            main_mes = '📈Ваш ежедневник:\n\n'
             for data in daily_tasks[-1: -8: -1][::-1]:
                 mes = f'🗓Дата:\n{data[0]}\n'
-                columns = await sql.get_all_columns_sql(message.from_user.id)
+                columns = await sql.get_all_columns_sql(callback.from_user.id)
                 columns = [column.replace('_', ' ') for column in columns]
                 for d in range(1, len(data)):
                     if data[d] == '0':
@@ -130,20 +133,20 @@ async def daily_statics_handler(message: Message, state: FSMContext, bot: Bot):
                 main_mes += mes + '\n\n'
             main_mes += f'{math.ceil(len(daily_tasks)/7)}/{math.ceil(len(daily_tasks)/7)}'
             
-            await message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
+            await callback.message.answer(main_mes, reply_markup=kb.inline_arroy_daily_tasks_kb)
         else:
-            await message.answer('‼️У вас не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
+            await callback.message.answer('‼️У вас не созданы задания, пожалуйста создайте их, нажав на кнопку Редактировать задания')
     else:
         sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
         for i in range(len(ls_channel)):
             sub_mes += f'{i+1} {ls_channel[i]}\n'
         sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
-        await message.answer(sub_mes)
+        await callback.message.answer(sub_mes)
 
 
 
-@router.message(F.text == '📊Статистика')
-async def general_statistics_handler(message: Message, state: FSMContext, bot: Bot):
+@router.callback_query(F.data == 'general_statistics')
+async def general_statistics_handler(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await state.clear()
 
     ls_channel = []
@@ -152,7 +155,7 @@ async def general_statistics_handler(message: Message, state: FSMContext, bot: B
     for c in sub_channels:
         try:
             chat = await bot.get_chat(c)
-            member = await bot.get_chat_member(chat_id=chat.id, user_id=message.from_user.id)
+            member = await bot.get_chat_member(chat_id=chat.id, user_id=callback.from_user.id)
             if str(member.status) == 'ChatMemberStatus.LEFT':
                 ls_channel.append(c)
         except:
@@ -161,10 +164,10 @@ async def general_statistics_handler(message: Message, state: FSMContext, bot: B
     if len(ls_channel) == 0:
         time_moscow = datetime.timezone(datetime.timedelta(hours=3))
         today = str(datetime.datetime.now(time_moscow).date())
-        aval_tasks = await sql.availability_of_table(message.from_user.id)
+        aval_tasks = await sql.availability_of_table(callback.from_user.id)
         if aval_tasks == 'yes':
-            data = await sql.get_all_daily_tasks_sql(message.from_user.id)
-            columns = await sql.get_all_columns_sql(message.from_user.id)
+            data = await sql.get_all_daily_tasks_sql(callback.from_user.id)
+            columns = await sql.get_all_columns_sql(callback.from_user.id)
             mes = '📊Ваша статистика за всё время\n\n'
 
             all_done_tasks = 0
@@ -191,15 +194,15 @@ async def general_statistics_handler(message: Message, state: FSMContext, bot: B
                     else:
                         shock_mode += 1
                 mes += f'{j} Задание "{str(columns[j]).replace("_", " ")}":\nСделано всего - {total_task}\nУдарный режим - {shock_mode}\n\n'
-            await message.answer(mes)
+            await callback.message.answer(mes)
         else:
-            await message.answer('‼️У вас нет заданий, пожалуйста создайте их, нажав на кнопку Редактировать задания')
+            await callback.message.answer('‼️У вас нет заданий, пожалуйста создайте их, нажав на кнопку Редактировать задания')
     else:
         sub_mes = '💥Чтобы использовать данную функцию, вы должны быть подписаны на эти каналы:\n'
         for i in range(len(ls_channel)):
             sub_mes += f'{i+1} {ls_channel[i]}\n'
         sub_mes += '\n🔄Если вы подписались на все нужные каналы, запустите команду повторно'
-        await message.answer(sub_mes)
+        await callback.message.answer(sub_mes)
 
 
 
@@ -289,8 +292,11 @@ async def reminder_main_handler(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(F.text == '👤Профиль')
-async def profile_user_handler(message: Message):
-    await message.answer('Данная функция пока не доступна.')
+async def profile_user_handler(message: Message, state: FSMContext):
+    await state.clear()
+    data = await sql.get_client_sql(message.from_user.id)
+    tasks_user = await sql.get_today_tasks_sql(message.from_user.id)
+    await message.answer(f'👤Ваш профиль:\n\nНикнейм: {data[1]}\nКоличество ударных дней: {data[4]}\nКоличество заданий: {len(tasks_user)-1}')
 
 
     
