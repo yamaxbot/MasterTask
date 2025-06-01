@@ -9,7 +9,7 @@ async def start_sql():
     db = sql.connect('data.db')
     cur = sql.Cursor(db)
 
-    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, nickname TEXT, reminder TEXT, registration_date TEXT, shock_mode TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, username TEXT, reminder TEXT, registration_date TEXT, shock_mode TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS subscribe_channel(username TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS main_date_table(date TEXT)")
@@ -33,11 +33,11 @@ async def new_main_date_sql(old_date):
     db.commit()
 
 
-async def add_client_sql(tg_id):
+async def add_client_sql(tg_id, username):
     today = str(datetime.datetime.now(time_moscow).date())
     all_clients = cur.execute("SELECT * FROM clients").fetchall()
     total_clients = len(all_clients)
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, f'user_{total_clients+1}', 0, today, ))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, username, 0, today, ))
     db.commit()
 
 
@@ -207,6 +207,6 @@ async def get_user_sql(tg_id):
     return cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, )).fetchone()
 
 
-async def update_firstname_user_sql(tg_id, nickname):
-    cur.execute("UPDATE clients SET nickname = ? WHERE id = ?", (nickname, tg_id, ))
+async def update_username_user_sql(tg_id, username):
+    cur.execute("UPDATE clients SET username = ? WHERE id = ?", (username, tg_id, ))
     db.commit()

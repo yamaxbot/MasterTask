@@ -5,8 +5,8 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 client_reply_keyboards = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='🔔Напоминание'), KeyboardButton(text='👤Профиль')],
-    [KeyboardButton(text='✏️Выполнить задания'), KeyboardButton(text='📊Статистика')],
-    [KeyboardButton(text='📝Редактировать задания'), KeyboardButton(text='🙋‍♂️Статистика друга')],
+    [KeyboardButton(text='✏️Выполнить ежедневные задания'), KeyboardButton(text='📊Статистика')],
+    [KeyboardButton(text='📝Редактировать ежедневные задания'), KeyboardButton(text='🙋‍♂️Статистика друга')],
 
 ], resize_keyboard=True)
 
@@ -62,7 +62,7 @@ inline_create_delete_code_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 inline_friend_statistics_all_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Статистика', callback_data='general_statistics_friend')],
-    [InlineKeyboardButton(text='Ежедневная статистика', callback_data='default_statistics_friend')]
+    [InlineKeyboardButton(text='Ежедневник', callback_data='default_statistics_friend')]
 ])
 
 
