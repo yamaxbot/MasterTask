@@ -6,7 +6,7 @@ time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 async def start_sql():
     global db, cur 
 
-    db = sql.connect('data.db')
+    db = sql.connect('data/data.db')
     cur = sql.Cursor(db)
 
     cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, username TEXT, reminder TEXT, registration_date TEXT, shock_mode TEXT)")
@@ -19,7 +19,7 @@ async def start_sql():
 async def connection_sql():
     global db, cur 
 
-    db = sql.connect('data.db')
+    db = sql.connect('data/data.db')
     cur = sql.Cursor(db)
 
 
@@ -35,9 +35,7 @@ async def new_main_date_sql(old_date):
 
 async def add_client_sql(tg_id, username):
     today = str(datetime.datetime.now(time_moscow).date())
-    all_clients = cur.execute("SELECT * FROM clients").fetchall()
-    total_clients = len(all_clients)
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?)", (tg_id, username, 0, today, ))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?, ?)", (tg_id, username, 0, today, 0, ))
     db.commit()
 
 
