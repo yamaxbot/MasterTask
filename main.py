@@ -2,9 +2,12 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from app.handlers import router
 from app.admin_handlers import router_admin
+from app.group_handlers import router_group
 import datetime
 from config import TOKEN
+
 import app.database.sqlite_db as sql
+import app.database.group_sqlite_db as gsql
 
 
 async def main():
@@ -12,8 +15,10 @@ async def main():
     dp = Dispatcher()
     asyncio.create_task(new_date(bot))
     await sql.start_sql()
+    await gsql.start_group_sql()
     dp.include_router(router=router)
     dp.include_router(router=router_admin)
+    dp.include_router(router=router_group)
     await dp.start_polling(bot)
 
 

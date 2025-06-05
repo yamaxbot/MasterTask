@@ -5,8 +5,8 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 client_reply_keyboards = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='🔔Напоминание'), KeyboardButton(text='👤Профиль')],
-    [KeyboardButton(text='✏️График дня'), KeyboardButton(text='📊Статистика')],
-    [KeyboardButton(text='📝Изменить график дня'), KeyboardButton(text='🙋‍♂️Статистика друга')],
+    [KeyboardButton(text='✏️Дневной план'), KeyboardButton(text='📊Статистика')],
+    [KeyboardButton(text='📝Изменить дневной план'), KeyboardButton(text='🙋‍♂️Статистика друга')],
 
 ], resize_keyboard=True)
 
