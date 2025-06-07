@@ -33,7 +33,8 @@ async def new_date(bot):
             await sql.new_main_date_sql(old_date)
             old_date = today
             await sql.new_date_sql()
-
+            await gsql.new_date_groups_gsql()
+            
         time = str(datetime.datetime.now(time_moscow).time())[:5]
         users = await sql.get_times_all_users_sql()
 

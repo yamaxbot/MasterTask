@@ -9,10 +9,11 @@ async def start_sql():
     db = sql.connect('data/data.db')
     cur = sql.Cursor(db)
 
-    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, username TEXT, reminder TEXT, registration_date TEXT, shock_mode TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS clients(id TEXT, username TEXT, reminder TEXT, registration_date TEXT, firstname TEXT, all_points TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS friend_statistics(id TEXT, password TEXT, active TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS subscribe_channel(username TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS main_date_table(date TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS posts(post_id TEXT, user_id TEXT, username TEXT, date TEXT, avtor TEXT, name TEXT, photo TEXT, content TEXT)")
     db.commit()
 
 
@@ -33,9 +34,9 @@ async def new_main_date_sql(old_date):
     db.commit()
 
 
-async def add_client_sql(tg_id, username):
+async def add_client_sql(tg_id, username, firstname):
     today = str(datetime.datetime.now(time_moscow).date())
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?, ?)", (tg_id, username, 0, today, 0, ))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?, ?)", (tg_id, username, 0, today, firstname, ))
     db.commit()
 
 
@@ -207,4 +208,16 @@ async def get_user_sql(tg_id):
 
 async def update_username_user_sql(tg_id, username):
     cur.execute("UPDATE clients SET username = ? WHERE id = ?", (username, tg_id, ))
+    db.commit()
+
+
+async def update_firstname_user_sql(tg_id, firstname):
+    cur.execute("UPDATE clients SET firstname = ? WHERE id = ?", (firstname, tg_id, ))
+    db.commit()
+
+
+async def add_points_clients_sql(tg_id):
+    client = cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, ))
+    points = int(client[5]) + 1
+    cur.execute("UPDATE clients SET all_points = ? WHERE id = ?", (points, tg_id, ))
     db.commit()

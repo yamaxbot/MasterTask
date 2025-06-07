@@ -27,6 +27,19 @@ class AddTask(StatesGroup):
 class PasswordFriend(StatesGroup):
     password = State()
 
+class AddPostAvtor(StatesGroup):
+    avtor = State()
+
+class AddPostName(StatesGroup):
+    name = State()
+
+class AddPostPhoto(StatesGroup):
+    photo = State()
+
+class AddPostContent(StatesGroup):
+    content = State()
+
+
 
 @router.message(Command('start'))
 async def command_start_handler(message: Message, state: FSMContext):
@@ -42,9 +55,9 @@ async def command_start_handler(message: Message, state: FSMContext):
         await sql.add_client_sql(message.from_user.id, message.from_user.username)
         await sql.create_new_table_sql(message.from_user.id)
     else:
-        if message.from_user.username != client[1]:
+        if message.from_user.username != client[1] or message.from_user.first_name != client[4]:
             await sql.update_username_user_sql(message.from_user.id, message.from_user.username)
-
+            await sql.update_firstname_user_sql(message.from_user.id, message.from_user.first_name)
 
 @router.message(Command('help'))
 async def command_help_handler(message: Message, state: FSMContext):
@@ -766,3 +779,6 @@ async def add_time_stop_state_handler(callback: CallbackQuery):
         await callback.message.answer(f'⏰️Нажав на кнопку Редактировать время, вы сможете добавить время, в которое вам нужно отправить напоминание и удалить время напоминаний, которое уже вам не нужно.\n\n⏳Время устанавливается по МСК!\n\n📒Ваши напоминания сработают в это время по МСК:\n{times}', reply_markup=kb.inline_add_delete_reminder_kb)
             
         await callback.message.answer('✅Сохранено!')
+
+
+
