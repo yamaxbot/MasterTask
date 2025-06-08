@@ -216,8 +216,8 @@ async def update_firstname_user_sql(tg_id, firstname):
     db.commit()
 
 
-async def add_points_clients_sql(tg_id):
-    client = cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, ))
-    points = int(client[5]) + 1
+async def add_points_clients_sql(tg_id, total_points):
+    client = cur.execute("SELECT * FROM clients WHERE id = ?", (tg_id, )).fetchone()
+    points = int(client[5]) + total_points
     cur.execute("UPDATE clients SET all_points = ? WHERE id = ?", (points, tg_id, ))
     db.commit()

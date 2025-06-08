@@ -3,7 +3,7 @@ import datetime
 
 time_moscow = datetime.timezone(datetime.timedelta(hours=3))
 
-async def start_group_sql():
+async def start_group_gsql():
     global db, cur
 
     db = sql.connect('data/group_data.db')
@@ -40,18 +40,18 @@ async def get_group_columns_gsql(chat_id):
     return columns
 
 
-async def add_new_user_group_gsql(chat_id, user_id):
+async def add_new_user_group_gsql(chat_id, user_id, total_points):
     table_name = f'group_{str(chat_id)[1:]}'
     today = str(datetime.datetime.now(time_moscow).date())
     cur.execute(f"ALTER TABLE {table_name} ADD {'id_'+str(user_id)} TEXT DEFAULT 0")
-    cur.execute(f"UPDATE {table_name} SET {'id_'+str(user_id)} = ? WHERE date = ?", (1, today, ))
+    cur.execute(f"UPDATE {table_name} SET {'id_'+str(user_id)} = ? WHERE date = ?", (total_points, today, ))
     db.commit()
 
 
-async def add_points_main_groups_gsql(chat_id):
+async def add_points_main_groups_gsql(chat_id, total_points):
     data = cur.execute("SELECT * FROM groups WHERE g_id = ?", (chat_id, )).fetchone()
     points = data[2]
-    points = int(points) + 1
+    points = int(points) + total_points
     cur.execute("UPDATE groups SET points = ? WHERE g_id = ?", (points, chat_id, ))
     db.commit()
 
@@ -65,15 +65,15 @@ async def get_activity_user_today_gsql(chat_id, user_id):
 
 
 
-async def add_points_gsql(chat_id, user_id):
+async def add_points_gsql(chat_id, user_id, total_points):
     old_points = list(cur.execute("SELECT points FROM groups WHERE g_id = ?", (chat_id, )).fetchone())[0]
-    points = int(old_points) + 1
+    points = int(old_points) + total_points
     cur.execute("UPDATE groups SET points = ? WHERE g_id = ?", (points, chat_id, ))
 
     today = str(datetime.datetime.now(time_moscow).date())
     table_name = 'group_' + str(chat_id)[1:]
     user_old_points = cur.execute(f"SELECT {'id_'+str(user_id)} FROM {table_name} WHERE date = ?", (today, )).fetchone()
-    user_points = int(user_old_points[0]) + 1
+    user_points = int(user_old_points[0]) + total_points
     cur.execute(f"UPDATE {table_name} SET {'id_'+str(user_id)} = ? WHERE date = ?", (user_points, today, ))
     db.commit()
 
@@ -110,3 +110,16 @@ async def new_date_groups_gsql():
         cur.execute(req, tuple(added_ls))
         db.commit()
 
+
+async def plus_minus_points_group_gsql(user_id, chat_id, total_points):
+    table_name = 'group_' + str(chat_id)[1:]
+    today = str(datetime.datetime.now(time_moscow).date())
+    data = cur.execute(f"SELECT {'id_'+str(user_id)} FROM {table_name} WHERE date = ?", (today, )).fetchone()
+    points = int(data[0]) + total_points
+    cur.execute(f"UPDATE {table_name} SET {'id_'+str(user_id)} = ? WHERE date = ?", (points, today, ))
+    db.commit()
+
+
+async def rename_group_gsql(chat_id, name):
+    cur.execute("UPDATE groups SET name = ? WHERE g_id = ?", (name, chat_id, ))
+    db.commit()

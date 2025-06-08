@@ -97,3 +97,10 @@ async def donate_reminder_kb():
     builder.button(text="Оплатить 100 ⭐️", pay=True)
     
     return builder.as_markup()
+
+
+async def battle_inline_kb(id):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(InlineKeyboardButton(text='Сразиться!', callback_data=f'battle_kb_{str(id)}'))
+    return keyboard.as_markup()
+    

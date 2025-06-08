@@ -15,7 +15,7 @@ async def main():
     dp = Dispatcher()
     asyncio.create_task(new_date(bot))
     await sql.start_sql()
-    await gsql.start_group_sql()
+    await gsql.start_group_gsql()
     dp.include_router(router=router)
     dp.include_router(router=router_admin)
     dp.include_router(router=router_group)
