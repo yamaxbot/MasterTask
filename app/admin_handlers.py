@@ -5,7 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram import Bot, F, Router
 from config import ADMINS
 import app.database.sqlite_db as sql
-
+import app.database.group_sqlite_db as gsql
 
 router_admin = Router()
 
@@ -26,7 +26,8 @@ async def statistics_admin_command_handler(message: Message, state: FSMContext):
     await state.clear()
     if message.from_user.id in ADMINS:
         all_users, new_users = await sql.statistics_command_sql()
-        await message.answer(f'📈Статистика:\n\n👨‍💻Всего пользователей: {all_users}\n\n⏰️ Новых за сегодня: {new_users}')
+        all_groups = await gsql.get_all_groups_id_gsql()
+        await message.answer(f'📈Статистика:\n\n👨‍💻Всего пользователей: {all_users}\n\n⏰️ Новых за сегодня: {new_users}\n\n👨‍👨‍👧‍👦Количество групп: {len(all_groups)}')
 
 
 

@@ -123,3 +123,11 @@ async def plus_minus_points_group_gsql(user_id, chat_id, total_points):
 async def rename_group_gsql(chat_id, name):
     cur.execute("UPDATE groups SET name = ? WHERE g_id = ?", (name, chat_id, ))
     db.commit()
+
+
+async def get_points_group_gsql(chat_id, user_id):
+    table_name = 'group_' + str(chat_id)[1:]
+    data = cur.execute(f"SELECT {'id_'+str(user_id)} FROM {table_name}").fetchall()
+    data = [int(d[0]) for d in data]
+    return sum(data)
+

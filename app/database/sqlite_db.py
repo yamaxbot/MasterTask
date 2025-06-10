@@ -36,7 +36,7 @@ async def new_main_date_sql(old_date):
 
 async def add_client_sql(tg_id, username, firstname):
     today = str(datetime.datetime.now(time_moscow).date())
-    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?, ?)", (tg_id, username, 0, today, firstname, ))
+    cur.execute("INSERT INTO clients VALUES(?, ?, ?, ?, ?, ?)", (tg_id, username, 0, today, firstname, 0, ))
     db.commit()
 
 

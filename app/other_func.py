@@ -10,8 +10,8 @@ async def generation_code():
 
 
 async def random_num():
-    return random.randint(1, 11)
+    return random.randint(1, 10)
 
 
 async def random_battle_num():
-    return random.randint(0, 2)
+    return random.randint(0, 1)

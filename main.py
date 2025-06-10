@@ -34,7 +34,12 @@ async def new_date(bot):
             old_date = today
             await sql.new_date_sql()
             await gsql.new_date_groups_gsql()
-            
+            id_groups = await gsql.get_all_groups_id_gsql()
+            for id in id_groups:
+                try:
+                    await bot.send_message(text='🎲Новый день начался! Теперь вы снова можете использовать команду /upgrade и заработать баллы', chat_id=id)
+                except:
+                    print(1)
         time = str(datetime.datetime.now(time_moscow).time())[:5]
         users = await sql.get_times_all_users_sql()
 
