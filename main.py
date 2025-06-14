@@ -29,6 +29,7 @@ async def new_date(bot):
     while True:
         time_moscow = datetime.timezone(datetime.timedelta(hours=3))
         today = str(datetime.datetime.now(time_moscow).date())
+        time = str(datetime.datetime.now(time_moscow).time())[:5]
         if old_date != today:
             await sql.new_main_date_sql(old_date)
             old_date = today
@@ -40,7 +41,6 @@ async def new_date(bot):
                     await bot.send_message(text='🎲Новый день начался! Теперь вы снова можете использовать команду /upgrade и заработать баллы', chat_id=id)
                 except:
                     print(1)
-        time = str(datetime.datetime.now(time_moscow).time())[:5]
         users = await sql.get_times_all_users_sql()
 
         for user in users:

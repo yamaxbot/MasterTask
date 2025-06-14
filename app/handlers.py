@@ -142,7 +142,8 @@ async def daily_statics_handler(callback: CallbackQuery, state: FSMContext, bot:
             daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
             main_mes = '📈Ваш ежедневник:\n\n'
             for data in daily_tasks[-1: -8: -1][::-1]:
-                mes = f'🗓Дата:\n{data[0]}\n'
+                visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+                mes = f'🗓Дата:\n{visible_date}\n'
                 columns = await sql.get_all_columns_sql(callback.from_user.id)
                 columns = [column.replace('_', ' ') for column in columns]
                 for d in range(1, len(data)):
@@ -377,7 +378,8 @@ async def daily_statics_allow_left_handler(callback: CallbackQuery):
         daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
         main_mes = 'Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
-            mes = f'Дата:\n{data[0]}\n'
+            visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+            mes = f'Дата:\n{visible_date}\n'
             columns = await sql.get_all_columns_sql(callback.from_user.id)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):
@@ -407,7 +409,8 @@ async def daily_statics_allow_right_handler(callback: CallbackQuery):
         daily_tasks = await sql.get_all_daily_tasks_sql(callback.from_user.id)
         main_mes = 'Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
-            mes = f'Дата:\n{data[0]}\n'
+            visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+            mes = f'Дата:\n{visible_date}\n'
             columns = await sql.get_all_columns_sql(callback.from_user.id)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):
@@ -644,7 +647,8 @@ async def daily_statics_friend_handler(callback: CallbackQuery, state: FSMContex
         daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
         main_mes = f'🔐Код вашего друга: {friend_password[4]}\n\n📈Ежедневник друга:\n\n'
         for data in daily_tasks[-1: -8: -1][::-1]:
-            mes = f'🗓Дата:\n{data[0]}\n'
+            visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+            mes = f'🗓Дата:\n{visible_date}\n'
             columns = await sql.get_all_columns_sql(id_user)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):
@@ -678,7 +682,8 @@ async def daily_statics_friend_allow_left_handler(callback: CallbackQuery):
         daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
         main_mes = f'🔐Код вашего друга: {code}\n\n📈Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
-            mes = f'Дата:\n{data[0]}\n'
+            visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+            mes = f'Дата:\n{visible_date}\n'
             columns = await sql.get_all_columns_sql(id_user)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):
@@ -710,7 +715,8 @@ async def daily_statics_friend_allow_right_handler(callback: CallbackQuery):
         daily_tasks = await sql.get_all_daily_tasks_sql(id_user)
         main_mes = f'🔐Код вашего друга: {code}\n\n📈Ежедневная статистика\n\n'
         for data in daily_tasks[-start_page: -stop_page: -1][::-1]:
-            mes = f'Дата:\n{data[0]}\n'
+            visible_date = '.'.join(list(str(data[0]).split('-'))[::-1])
+            mes = f'Дата:\n{visible_date}\n'
             columns = await sql.get_all_columns_sql(id_user)
             columns = [column.replace('_', ' ') for column in columns]
             for d in range(1, len(data)):

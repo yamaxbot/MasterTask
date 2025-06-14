@@ -13,6 +13,9 @@ router_admin = Router()
 class NewsLetterState(StatesGroup):
     mes = State()
 
+class GroupNewsLetterState(StatesGroup):
+    mes = State()
+
 
 @router_admin.message(Command('admin_commands'))
 async def all_admin_commands_handler(message: Message):
@@ -110,3 +113,26 @@ async def delete_channel_subscribe_handler(message: Message):
             await message.answer('Этот канал успешно удалён')
         else:
             await message.answer('Такого канала в списке нет')
+
+
+
+@router_admin.message(Command('group_newsletter'))
+async def group_newsletter_admins_command_handler(message: Message, state: FSMContext):
+    await state.clear()
+    if message.from_user.id in ADMINS:
+        await state.set_state(GroupNewsLetterState.mes)
+        await message.answer('Отправьте сообщение которое хотите разослать')
+
+
+@router_admin.message(GroupNewsLetterState.mes)
+async def group_newsletter_admins_command_state_handler(message: Message, state: FSMContext):
+    id_groups = await gsql.get_all_groups_id_gsql()
+    total = 0
+    for id in id_groups:
+        try:
+            await message.send_copy(chat_id=id)
+            total += 1
+        except:
+            print(1)
+    await message.answer(text=f'Сообщение разослано, {total} групп')
+

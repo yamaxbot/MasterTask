@@ -12,6 +12,8 @@ import app.keyboards as kb
 
 router_group = Router()
 
+totalt = 0
+
 
 @router_group.message(F.text.startswith('/add_group'))
 async def add_group_handler(message: Message):
@@ -139,7 +141,7 @@ async def top_users_handler(message: Message):
 async def global_top_users_command_handler(message: Message):
     if str(message.chat.id)[0] != '-':
         clients = await sql.get_all_clients_sql()
-        clients = sorted(clients, key=lambda x: x[5], reverse=True)
+        clients = sorted(clients, key=lambda x: int(x[5]), reverse=True)
         mes = 'Топ 10 пользователей по количеству баллов\n\n'
         flag = False
 
@@ -233,5 +235,16 @@ async def my_points_command_handler(message: Message, state: FSMContext):
 
 
 @router_group.message(F.text.startswith('/buy'))
-async def donate_group_handler(message: Message):
-    await message.answer('Данная функция пока что не работает, но скоро мы её подключим')
+async def donate_group_handler(message: Message, bot: Bot):
+    await message.answer('Данная функция пока недоступна')
+
+
+
+@router_group.callback_query(F.data.startswith('battle_cancel_'))
+async def battle_cancel_inline_handler(callback: CallbackQuery):
+    await callback.answer()
+    user_id = list(str(callback.data).split('_'))[2]
+    if user_id == str(callback.from_user.id):
+        await callback.message.edit_text(text='Сражение отменено!')
+    else:
+        await callback.message.answer('Сражение может отменить только пользователь, который начал сражение')

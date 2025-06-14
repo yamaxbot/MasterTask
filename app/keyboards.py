@@ -102,5 +102,6 @@ async def donate_reminder_kb():
 async def battle_inline_kb(id):
     keyboard = InlineKeyboardBuilder()
     keyboard.add(InlineKeyboardButton(text='Сразиться!', callback_data=f'battle_kb_{str(id)}'))
-    return keyboard.as_markup()
-    
+    keyboard.add(InlineKeyboardButton(text='Отмена', callback_data=f'battle_cancel_{str(id)}'))
+    return keyboard.adjust(1).as_markup()
+
