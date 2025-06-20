@@ -1,3 +1,6 @@
+# Этот файл не подключен в файле main
+
+
 import sqlite3 as sql
 import datetime
 

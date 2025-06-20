@@ -18,7 +18,6 @@ async def main():
     await gsql.start_group_gsql()
     dp.include_router(router=router)
     dp.include_router(router=router_admin)
-    dp.include_router(router=router_group)
     await dp.start_polling(bot)
 
 
@@ -34,13 +33,7 @@ async def new_date(bot):
             await sql.new_main_date_sql(old_date)
             old_date = today
             await sql.new_date_sql()
-            await gsql.new_date_groups_gsql()
-            id_groups = await gsql.get_all_groups_id_gsql()
-            for id in id_groups:
-                try:
-                    await bot.send_message(text='🎲Новый день начался! Теперь вы снова можете использовать команду /upgrade и заработать баллы', chat_id=id)
-                except:
-                    print(1)
+
         users = await sql.get_times_all_users_sql()
 
         for user in users:

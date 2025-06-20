@@ -1,2 +1,2 @@
-TOKEN="8185190653:AAHjC2wI6pri-PSnpdrm5NKrwsgvKlLveq0"
-ADMINS=[5227185772]
+TOKEN=""     #токен бота
+ADMINS=[]    # id телеграм пользователей в типе данных int
